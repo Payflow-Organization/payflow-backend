@@ -33,8 +33,9 @@ public class AuditConsumer {
     public void handle(String payload) {
         try {
             TransactionCreatedPayload event = objectMapper.readValue(payload, TransactionCreatedPayload.class);
-
             if (processedEventRepository.existsByIdEventIdAndIdConsumerGroup(event.transactionId(), CONSUMER_GROUP)) {
+                log.warn("Duplicate audit event skipped  txId={}",
+                         event.transactionId());
                 return;
             }
 
@@ -45,13 +46,14 @@ public class AuditConsumer {
                     .entityId(event.transactionId())
                     .build());
 
-            processedEventRepository.save(ProcessedEvent.builder()
+              processedEventRepository.save(ProcessedEvent.builder()
                     .id(ProcessedEvent.ProcessedEventId.builder()
                             .eventId(event.transactionId())
                             .consumerGroup(CONSUMER_GROUP)
                             .build())
                     .processedAt(Instant.now())
                     .build());
+            log.info("Audit event processed txId={} type={}", event.transactionId(), event.type().name());
 
         } catch (JacksonException e) {
             throw new IllegalStateException("Failed to deserialize payload", e);

@@ -12,6 +12,7 @@ import com.itextpdf.layout.properties.UnitValue;
 import com.payflow.application.dto.TransactionView;
 import com.payflow.application.port.PdfExportPort;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PdfStatementAdapter implements PdfExportPort {
@@ -32,7 +34,7 @@ public class PdfStatementAdapter implements PdfExportPort {
             document.add(header(walletId));
             document.add(transactionTable(rows));
             document.add(footer(rows));
-        }
+            log.info("PDF export completed pages={} walletId={}", pdf.getNumberOfPages(), walletId);        }
     }
 
     private Paragraph header(UUID walletId) {

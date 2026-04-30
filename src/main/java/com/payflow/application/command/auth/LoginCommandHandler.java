@@ -7,6 +7,7 @@ import com.payflow.application.service.RefreshTokenService;
 import com.payflow.domain.model.user.User;
 import com.payflow.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LoginCommandHandler {
@@ -36,6 +38,8 @@ public class LoginCommandHandler {
                 new UsernameNotFoundException("User not found: "+ command.email()));
         String accessToken= tokenPort.generateAccessToken(user);
         String rawRefreshToken= refreshTokenService.issue(user.getId());
+
+        log.info("User logged in userId={} email={}", user.getId(), user.getUsername());
         return AuthenticationResponse.builder()
                 .email(user.getUsername())
                 .accessToken(accessToken)

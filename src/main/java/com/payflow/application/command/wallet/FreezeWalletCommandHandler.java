@@ -7,6 +7,7 @@ import com.payflow.domain.repository.WalletRepository;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FreezeWalletCommandHandler {
@@ -39,6 +41,8 @@ public class FreezeWalletCommandHandler {
                 .orElseThrow(() -> new WalletNotFoundException(command.walletId()));
 
         wallet.freeze();
+        log.warn("Wallet frozen walletId={} userId={}",
+                command.walletId(), command.userId());
         walletService.save(wallet);
     }
 }

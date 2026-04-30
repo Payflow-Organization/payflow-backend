@@ -80,6 +80,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InsufficientBalanceException.class)
     @ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
     public ErrorResponse handleInsufficientBalance(InsufficientBalanceException ex) {
+        log.warn("Insufficient balance: {}", ex.getMessage());
         return new ErrorResponse("INSUFFICIENT_BALANCE", ex.getMessage());
     }
 
@@ -104,12 +105,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CannotAcquireLockException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ErrorResponse handleLockTimeout(CannotAcquireLockException ex) {
+        log.warn("Lock timeout acquired");
         return new ErrorResponse("LOCK_TIMEOUT", "Service is under high load, please retry");
     }
 
     @ExceptionHandler(PessimisticLockingFailureException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ErrorResponse handleSerializationFailure(PessimisticLockingFailureException ex) {
+        log.warn("Serialization failure after retries exhausted");
         return new ErrorResponse("SERIALIZATION_FAILURE", "Transaction could not be serialized after retries, please retry");
     }
 
@@ -127,12 +130,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidRefreshTokenException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
+        log.warn("Invalid refresh token: {}", ex.getMessage());
         return new ErrorResponse("INVALID_REFRESH_TOKEN", ex.getMessage());
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleBadCredentials(BadCredentialsException ex) {
+        log.warn("Failed login attempt");
         return new ErrorResponse("INVALID_CREDENTIALS", "Invalid email or password");
     }
     @ExceptionHandler(UncheckedIOException.class)

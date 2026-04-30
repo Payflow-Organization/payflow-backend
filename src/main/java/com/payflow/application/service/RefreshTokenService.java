@@ -4,6 +4,7 @@ import com.payflow.domain.model.token.InvalidRefreshTokenException;
 import com.payflow.domain.model.token.RefreshToken;
 import com.payflow.domain.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,14 +18,14 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-
 public class RefreshTokenService {
     @Value("${app.jwt.refresh-expiration}")
     private final long refreshExpirationMs;
-
     private final RefreshTokenRepository refreshTokenRepository;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Transactional
     public String issue(UUID userId) {
@@ -47,15 +48,16 @@ public class RefreshTokenService {
                 .ifPresent(token -> {
                     token.revoke();
                     refreshTokenRepository.save(token);
+                    log.warn("Refresh token revoked userId={}", token.getUserId());
+
                 });
     }
-
     public RefreshToken validate(String rawToken) {
         String hash = sha256Hex(rawToken);
         RefreshToken token = refreshTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new InvalidRefreshTokenException("Token not found"));
         if (token.isRevoked()) {
-            revokeAllByUserId(token.getUserId()); //NOSONAR
+            refreshTokenRepository.revokeAllByUserId(token.getUserId());
             throw new InvalidRefreshTokenException("Token already revoked");
         }
         if (token.getExpiresAt().isBefore(Instant.now())) {
@@ -65,16 +67,7 @@ public class RefreshTokenService {
         return token;
     }
 
-    @Transactional
-    public void revokeAllByUserId(UUID userId) {
-        refreshTokenRepository.findAllByUserId(userId)
-                .forEach(token -> {
-                    if (!token.isRevoked()) {
-                        token.revoke();
-                        refreshTokenRepository.save(token);
-                    }
-                });
-    }
+
 
 
     private static String sha256Hex(String input) {
@@ -89,7 +82,7 @@ public class RefreshTokenService {
 
     private static String generateSecureToken() {
         byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
+        SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }

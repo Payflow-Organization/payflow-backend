@@ -9,6 +9,7 @@ import com.payflow.domain.repository.WalletRepository;
 import java.util.Currency;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CreateWalletCommandHandler {
@@ -43,6 +45,8 @@ public class CreateWalletCommandHandler {
         }
         Wallet wallet = Wallet.create(command.userId(), command.currency());
         walletService.save(wallet);
+        log.info("Wallet created walletId={} userId={} currency={}",
+                wallet.getId(), command.userId(), command.currency());
         return WalletResponse.from(wallet);
     }
 }

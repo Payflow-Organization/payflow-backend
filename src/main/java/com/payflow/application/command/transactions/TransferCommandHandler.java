@@ -14,6 +14,7 @@ import com.payflow.domain.repository.TransactionRepository;
 import com.payflow.domain.repository.WalletRepository;
 import com.payflow.infrastructure.kafka.TransactionOutboxWriter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TransferCommandHandler {
@@ -62,6 +64,12 @@ public class TransferCommandHandler {
     public Transaction handle(Command command) {
         // STEP 1: Idempotency
         return idempotencyService.findDuplicate(command.idempotencyKey())
+                .map(tx -> {
+                            log.warn("Duplicate TRANSFER skipped idempotencyKey={} fromWalletId={} toWalletId={}",
+                                    command.idempotencyKey(), command.sourceWalletId(), command.destinationWalletId());
+                            return tx;
+                        }
+                    )
                 .orElseGet(() -> processNew(command));
     }
 
@@ -107,6 +115,9 @@ public class TransferCommandHandler {
         // STEP 8: Mark complete and persist
         tx.complete();
         eventPublisher.publishTransactionCreated(tx,sourceWallet.getUserId());
-        return transactionRepository.save(tx);
+        tx= transactionRepository.save(tx);
+        log.info("Transfer completed from fromWalletId={} to toWalletId={} amountCents={} txId={} idempotencyKey={}",
+                command.sourceWalletId(),command.destinationWalletId(), command.amountCents(), tx.getId(), command.idempotencyKey());
+        return tx;
     }
 }

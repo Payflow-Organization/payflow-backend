@@ -20,8 +20,11 @@ public class ReconciliationService {
     @Scheduled(cron = "0 0 2 * * *")
     public void reconcile()
     {
+        log.info("[RECONCILIATION] Starting daily reconciliation");
         checkGlobalBalance();
         checkWalletCache();
+        log.info("[RECONCILIATION] Reconciliation completed");
+
     }
 
     private void checkGlobalBalance() {

@@ -2,6 +2,7 @@ package com.payflow.application.command.auth;
 
 import com.payflow.application.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -9,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LogoutCommandHandler {
@@ -34,5 +35,8 @@ public class LogoutCommandHandler {
         refreshTokenService.revoke(
                 command.rawRefreshToken()
         );
+
+        log.info("User logged out jti={} ttlSeconds={}", command.tokenJti(), remainingTtlSeconds);
+
     }
 }

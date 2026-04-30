@@ -64,3 +64,13 @@ app:
     secret: ${JWT_SECRET}
     expiration: 900000
     refresh-expiration: 604800000
+
+logging:
+  level:
+    com.payflow: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    org.apache.kafka: WARN
+  structured:
+    format:
+      console: ecs

@@ -2,6 +2,7 @@ package com.payflow.infrastructure.io;
 
 import com.payflow.application.dto.TransactionView;
 import com.payflow.application.port.CsvExportPort;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
+@Slf4j
 @Component
 public class CsvStatementAdapter implements CsvExportPort {
 
@@ -32,10 +34,12 @@ public class CsvStatementAdapter implements CsvExportPort {
                             formatMoney(tx.balanceAfter()),
                             tx.createdAt()
                     );
+
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
             });
+            log.info("CSV export completed");
         }
     }
 
