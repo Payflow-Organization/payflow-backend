@@ -16,7 +16,7 @@ public class LedgerMetrics {
     @PostConstruct
     public void registerGauges() {
         Gauge.builder("payflow.ledger.imbalance", ledgerEntryRepository, repo ->
-                repo.findGlobalImbalance().doubleValue())
+                repo.findGlobalImbalance())
                 .description("SUM(CREDIT - DEBIT), should always be 0")
                 .register(meterRegistry);
     }

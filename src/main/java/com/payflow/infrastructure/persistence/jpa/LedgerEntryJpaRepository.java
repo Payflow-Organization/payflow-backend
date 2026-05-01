@@ -9,8 +9,6 @@ import com.payflow.domain.repository.LedgerEntryRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -94,9 +92,9 @@ public interface LedgerEntryJpaRepository extends JpaRepository<LedgerEntry, UUI
     );
     @Query(value = """
     SELECT
-        COALESCE(SUM(amount) FILTER (WHERE entry_type = 'CREDIT'), 0) -
-        COALESCE(SUM(amount) FILTER (WHERE entry_type = 'DEBIT'),  0)
+        COALESCE(SUM(amount) FILTER (WHERE entry_type = 'CREDIT'), 0)::bigint  -
+        COALESCE(SUM(amount) FILTER (WHERE entry_type = 'DEBIT'),  0)::bigint
     FROM ledger_entries
     """, nativeQuery = true)
-    BigDecimal findGlobalImbalance();
+    long findGlobalImbalance();
 }
