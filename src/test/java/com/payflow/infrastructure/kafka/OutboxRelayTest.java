@@ -2,9 +2,11 @@ package com.payflow.infrastructure.kafka;
 
 import com.payflow.domain.model.outbox.OutboxEvent;
 import com.payflow.domain.model.outbox.OutboxEventStatus;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -20,7 +22,16 @@ class OutboxRelayTest {
     @Mock private OutboxService outboxService;
     @Mock private TransactionEventPublisher publisher;
 
-    @InjectMocks private OutboxRelay relay;
+    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+    private OutboxRelay relay;
+
+    @BeforeEach
+    void setUp() {
+        relay = new OutboxRelay(
+                outboxService,
+                publisher,
+                meterRegistry);
+    }
 
     private OutboxEvent pendingEvent(int retryCount) {
         OutboxEvent event = new OutboxEvent();

@@ -11,4 +11,5 @@ public interface RefreshTokenRepository {
     List<RefreshToken> findAllByUserId(UUID userId);
     void deleteAllByUserId(UUID userId);
     RefreshToken save(RefreshToken token);
+    void revokeAllByUserId(UUID userId);
 }

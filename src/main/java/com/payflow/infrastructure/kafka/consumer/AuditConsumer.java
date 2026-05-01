@@ -1,5 +1,7 @@
 package com.payflow.infrastructure.kafka.consumer;
 
+import org.slf4j.MDC;
+import org.springframework.messaging.handler.annotation.Header;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import com.payflow.domain.model.audit.AuditLog;
@@ -30,11 +32,20 @@ public class AuditConsumer {
             groupId = "${payflow.kafka.consumer.audit-group}"
     )
     @Transactional
-    public void handle(String payload) {
+    public void handle(String payload,
+                       @Header(value = "traceparent", required = false) String traceparent) {
+        if (traceparent != null) {
+            String[] parts = traceparent.split("-");
+            if (parts.length == 4) {
+                MDC.put("trace.id", parts[1]);
+                MDC.put("span.id", parts[2]);
+            }
+        }
         try {
             TransactionCreatedPayload event = objectMapper.readValue(payload, TransactionCreatedPayload.class);
-
             if (processedEventRepository.existsByIdEventIdAndIdConsumerGroup(event.transactionId(), CONSUMER_GROUP)) {
+                log.warn("Duplicate audit event skipped  txId={}",
+                         event.transactionId());
                 return;
             }
 
@@ -45,16 +56,20 @@ public class AuditConsumer {
                     .entityId(event.transactionId())
                     .build());
 
-            processedEventRepository.save(ProcessedEvent.builder()
+              processedEventRepository.save(ProcessedEvent.builder()
                     .id(ProcessedEvent.ProcessedEventId.builder()
                             .eventId(event.transactionId())
                             .consumerGroup(CONSUMER_GROUP)
                             .build())
                     .processedAt(Instant.now())
                     .build());
+            log.info("Audit event processed txId={} type={}", event.transactionId(), event.type().name());
 
         } catch (JacksonException e) {
             throw new IllegalStateException("Failed to deserialize payload", e);
+        }
+        finally {
+            MDC.clear();
         }
     }
 }

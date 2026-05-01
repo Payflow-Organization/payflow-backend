@@ -9,7 +9,10 @@ import com.payflow.domain.model.transaction.TransactionType;
 import com.payflow.domain.model.wallet.Wallet;
 import com.payflow.domain.repository.TransactionRepository;
 import com.payflow.infrastructure.kafka.TransactionOutboxWriter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
@@ -18,13 +21,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WithdrawCommandHandler {
 
     private final WalletService walletService;
+    private final IdempotencyService idempotencyService;
+    private final TransactionRepository transactionRepository;
+    private final LedgerService ledgerService;
+    private final TransactionOutboxWriter eventPublisher;
+    private final MeterRegistry meterRegistry;
 
     public record Command(
             String idempotencyKey,
@@ -39,10 +49,7 @@ public class WithdrawCommandHandler {
         }
     }
 
-    private final IdempotencyService idempotencyService;
-    private final TransactionRepository transactionRepository;
-    private final LedgerService ledgerService;
-    private final TransactionOutboxWriter eventPublisher;
+
 
     @Retryable(
             retryFor = {ObjectOptimisticLockingFailureException.class, PessimisticLockingFailureException.class},
@@ -55,9 +62,33 @@ public class WithdrawCommandHandler {
     )
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction handle(Command command) {
-        // STEP 1: Idempotency
-        return idempotencyService.findDuplicate(command.idempotencyKey())
-                .orElseGet(() -> processNew(command));
+        System.out.println("meterRegistry = " + meterRegistry);
+        Timer.Sample timer = Timer.start(meterRegistry);
+        String path = "duplicate";
+        String currency = "unknown";
+        try{
+            // STEP 1: Idempotency
+            Optional<Transaction> duplicate = idempotencyService.findDuplicate(command.idempotencyKey());
+            if (duplicate.isPresent()) {
+                meterRegistry.counter("payflow.idempotency.duplicate",
+                        "command_type", "withdraw");
+                log.warn("Duplicate WITHDRAW skipped idempotencyKey={} walletId={}",
+                        command.idempotencyKey(), command.walletId());
+                return duplicate.get();
+            }
+            path = "new";
+            Transaction tx = processNew(command);
+            currency = tx.getCurrency().getCurrencyCode();
+            meterRegistry.counter("payflow.transfer.success",
+                    "currency", currency);
+            return tx;
+        }
+        finally{
+            timer.stop(Timer.builder("payflow.withdraw.latency")
+                    .tag("currency", currency)
+                    .tag("path", path)
+                    .register(meterRegistry));
+        }
     }
 
     private Transaction processNew(Command command) {
@@ -92,6 +123,9 @@ public class WithdrawCommandHandler {
         // STEP 7: Mark complete and persist
         tx.complete();
         eventPublisher.publishTransactionCreated(tx,wallet.getUserId());
-        return transactionRepository.save(tx);
+        tx = transactionRepository.save(tx);
+        log.info("Withdraw completed walletId={} amountCents={} txId={} idempotencyKey={}",
+                command.walletId(), command.amountCents(), tx.getId(), command.idempotencyKey());
+        return tx;
     }
 }

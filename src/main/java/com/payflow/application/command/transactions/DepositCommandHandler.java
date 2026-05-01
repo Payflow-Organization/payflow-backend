@@ -8,7 +8,10 @@ import com.payflow.domain.model.transaction.TransactionType;
 import com.payflow.domain.model.wallet.Wallet;
 import com.payflow.domain.repository.TransactionRepository;
 import com.payflow.infrastructure.kafka.TransactionOutboxWriter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
@@ -17,8 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DepositCommandHandler {
@@ -42,7 +47,7 @@ public class DepositCommandHandler {
     private final TransactionRepository transactionRepository;
     private final LedgerService ledgerService;
     private final TransactionOutboxWriter eventPublisher;
-
+    private final MeterRegistry meterRegistry;
     @Retryable(
             retryFor = {ObjectOptimisticLockingFailureException.class,PessimisticLockingFailureException .class},
             maxAttemptsExpression = "${payflow.retry.max-attempts:3}",
@@ -54,9 +59,32 @@ public class DepositCommandHandler {
     )
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction handle(Command command) {
-        // STEP 1: Idempotency
-        return idempotencyService.findDuplicate(command.idempotencyKey())
-                .orElseGet(() -> processNew(command));
+        Timer.Sample timer = Timer.start(meterRegistry);
+
+        String path = "duplicate";
+        String currency = "unknown";
+        try{
+            // STEP 1: Idempotency
+            Optional<Transaction> duplicate = idempotencyService.findDuplicate(command.idempotencyKey());
+            if(duplicate.isPresent()){
+                meterRegistry.counter("payflow.idempotency.duplicate",
+                        "command_type", "deposit");
+                log.warn("Duplicate DEPOSIT skipped idempotencyKey={} walletId={}",
+                        command.idempotencyKey(), command.walletId());
+                return duplicate.get();
+            }
+            Transaction tx = processNew(command);
+            currency = tx.getCurrency().getCurrencyCode();
+            meterRegistry.counter("payflow.transfer.success",
+                    "currency", currency);
+            return tx;
+        }
+        finally {
+            timer.stop(Timer.builder("payflow.deposit.latency")
+                    .tag("currency", currency)
+                    .tag("path", path)
+                    .register(meterRegistry));
+        }
     }
 
     private Transaction processNew(Command command) {
@@ -87,6 +115,9 @@ public class DepositCommandHandler {
         // STEP 7: Mark complete and persist
         tx.complete();
         eventPublisher.publishTransactionCreated(tx,wallet.getUserId());
-        return transactionRepository.save(tx);
+        tx= transactionRepository.save(tx);
+        log.info("Deposit completed walletId={} amountCents={} txId={} idempotencyKey={}",
+                command.walletId(), command.amountCents(), tx.getId(), command.idempotencyKey());
+        return tx;
     }
 }

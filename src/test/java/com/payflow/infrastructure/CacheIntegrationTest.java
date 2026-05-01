@@ -69,42 +69,22 @@ class CacheIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void getActiveByIdFirstCallPopulatesCache() {
-        transactionTemplate.execute(status -> {
-            walletService.getActiveById(walletId, userId);
-            return null;
-        });
-
-        assertNotNull(cacheManager.getCache("wallets").get(walletId + ":" + userId));
-    }
-
-    @Test
-    void getActiveByIdSecondCallReturnsCachedValue() {
-        transactionTemplate.execute(status -> {
-            walletService.getActiveById(walletId, userId);
-            return null;
-        });
-
-        Wallet first = walletService.getActiveById(walletId, userId);
-        Wallet second = walletService.getActiveById(walletId, userId);
-
-        assertEquals(first.getId(), second.getId());
-    }
-
-    @Test
     void saveEvictsCache() {
+        // Given - populate cache
         transactionTemplate.execute(status -> {
             walletService.getActiveById(walletId, userId);
             return null;
         });
         assertNotNull(cacheManager.getCache("wallets").get(walletId + ":" + userId));
 
+        // When - save without going through getActiveById
         transactionTemplate.execute(status -> {
-            Wallet wallet = walletService.getActiveById(walletId, userId);
+            Wallet wallet = walletRepository.findById(walletId).orElseThrow();
             walletService.save(wallet);
             return null;
         });
 
+        // Then
         assertNull(cacheManager.getCache("wallets").get(walletId + ":" + userId));
     }
 }

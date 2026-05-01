@@ -11,9 +11,11 @@ import com.payflow.domain.model.wallet.Wallet;
 import com.payflow.domain.repository.TransactionRepository;
 import com.payflow.domain.repository.WalletRepository;
 import com.payflow.infrastructure.kafka.TransactionOutboxWriter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -44,18 +46,30 @@ class WithdrawCommandHandlerTest {
     @Mock
     private LedgerService ledgerService;
 
+
     @Mock
     private TransactionOutboxWriter eventPublisher;
 
-    @InjectMocks
     private WithdrawCommandHandler handler;
 
     private static final UUID USER_ID   = UUID.randomUUID();
     private static final UUID WALLET_ID = UUID.randomUUID();
     private static final Currency EUR   = Currency.getInstance("EUR");
+    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     private WithdrawCommandHandler.Command command(long amountCents) {
         return new WithdrawCommandHandler.Command("idem-key-1", WALLET_ID, USER_ID, amountCents);
+    }
+    @BeforeEach
+    void setUp() {
+        handler = new WithdrawCommandHandler(
+                walletService,
+                idempotencyService,
+                transactionRepository,
+                ledgerService,
+                eventPublisher,
+                meterRegistry
+        );
     }
 
     private Wallet activeWallet(long balance) {
@@ -123,4 +137,5 @@ class WithdrawCommandHandlerTest {
 
         verifyNoInteractions(ledgerService, eventPublisher, transactionRepository);
     }
+
 }

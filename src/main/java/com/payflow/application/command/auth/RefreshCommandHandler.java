@@ -6,9 +6,11 @@ import com.payflow.application.port.UserPort;
 import com.payflow.application.service.RefreshTokenService;
 import com.payflow.domain.model.token.RefreshToken;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefreshCommandHandler {
@@ -25,6 +27,8 @@ public class RefreshCommandHandler {
 
         String newAccessToken = tokenPort.generateAccessToken(userDetails);
         String newRefreshToken = refreshTokenService.issue(token.getUserId());
+
+        log.info("Refresh token rotated userId={}", token.getUserId());
         return AuthenticationResponse
                 .builder()
                 .email(userDetails.getUsername())

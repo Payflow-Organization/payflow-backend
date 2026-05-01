@@ -13,17 +13,18 @@ import com.payflow.domain.model.wallet.Wallet;
 import com.payflow.domain.repository.RefreshTokenRepository;
 import com.payflow.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Currency;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegisterCommandHandler {
 
-    private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
 
     public record Command(String email, String password, String fullName) {}
@@ -50,6 +51,7 @@ public class RegisterCommandHandler {
         walletService.save(wallet);
         String accessToken = tokenPort.generateAccessToken(user);
         String rawRefreshToken = refreshTokenService.issue(user.getId());
+        log.info("User logged in userId={} walletID={}", user.getId(), wallet.getId());
         return AuthenticationResponse.builder()
                 .email(user.getUsername())
                 .accessToken(accessToken)

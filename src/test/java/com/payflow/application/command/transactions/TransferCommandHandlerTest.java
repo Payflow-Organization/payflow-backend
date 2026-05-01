@@ -15,9 +15,11 @@ import com.payflow.domain.model.wallet.WalletStatus;
 import com.payflow.domain.repository.TransactionRepository;
 import com.payflow.domain.repository.WalletRepository;
 import com.payflow.infrastructure.kafka.TransactionOutboxWriter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -51,8 +53,9 @@ class TransferCommandHandlerTest {
     @Mock
     private TransactionOutboxWriter eventPublisher;
 
-    @InjectMocks
+    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
     private TransferCommandHandler handler;
+
 
     private static final UUID USER_ID   = UUID.randomUUID();
     private static final UUID SOURCE_ID = UUID.randomUUID();
@@ -183,5 +186,18 @@ class TransferCommandHandlerTest {
         assertThatThrownBy(() -> handler.handle(command))
                 .isInstanceOf(InsufficientBalanceException.class);
         verifyNoInteractions(ledgerService, eventPublisher, transactionRepository);
+    }
+
+    @BeforeEach
+    void setUp() {
+        handler = new TransferCommandHandler(
+                walletService,
+                idempotencyService,
+                walletRepository,
+                transactionRepository,
+                ledgerService,
+                eventPublisher,
+                meterRegistry
+        );
     }
 }
