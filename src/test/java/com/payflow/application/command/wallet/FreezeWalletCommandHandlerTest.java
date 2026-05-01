@@ -5,9 +5,11 @@ import com.payflow.domain.model.wallet.Wallet;
 import com.payflow.domain.model.wallet.WalletNotFoundException;
 import com.payflow.domain.model.wallet.WalletStatus;
 import com.payflow.domain.repository.WalletRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -26,12 +28,20 @@ class FreezeWalletCommandHandlerTest {
     @Mock
     private WalletRepository walletRepository;
 
-
     @Mock
     private WalletService walletService;
 
-    @InjectMocks
+    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
     private FreezeWalletCommandHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        handler = new FreezeWalletCommandHandler(
+                walletRepository,
+                walletService,
+                meterRegistry);
+    }
 
     @Test
     void shouldFreezeActiveWallet() {

@@ -5,9 +5,11 @@ import com.payflow.application.service.WalletService;
 import com.payflow.domain.model.wallet.Wallet;
 import com.payflow.domain.model.wallet.WalletAlreadyExistsException;
 import com.payflow.domain.repository.WalletRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -26,14 +28,23 @@ class CreateWalletCommandHandlerTest {
     @Mock
     private WalletRepository walletRepository;
 
-
     @Mock
     private WalletService walletService;
 
-    @InjectMocks
+    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
     private CreateWalletCommandHandler handler;
 
     private static final Currency EUR = Currency.getInstance("EUR");
+
+    @BeforeEach
+    void setUp() {
+        handler = new CreateWalletCommandHandler(
+                walletService,
+                walletRepository,
+                meterRegistry
+        );
+    }
 
     @Test
     void shouldCreateWalletForNewCurrency() {
@@ -58,4 +69,6 @@ class CreateWalletCommandHandlerTest {
 
         verify(walletService, never()).save(any());
     }
+
+
 }

@@ -9,9 +9,11 @@ import com.payflow.domain.model.transaction.TransactionType;
 import com.payflow.domain.model.wallet.Wallet;
 import com.payflow.domain.repository.TransactionRepository;
 import com.payflow.infrastructure.kafka.TransactionOutboxWriter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -41,7 +43,8 @@ class DepositCommandHandlerTest {
     @Mock
     private TransactionOutboxWriter eventPublisher;
 
-    @InjectMocks
+    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
     private DepositCommandHandler handler;
 
     private static final UUID USER_ID   = UUID.randomUUID();
@@ -51,6 +54,19 @@ class DepositCommandHandlerTest {
     private DepositCommandHandler.Command command(long amountCents) {
         return new DepositCommandHandler.Command("idem-key-1", WALLET_ID, USER_ID, amountCents);
     }
+
+    @BeforeEach
+    void setUp() {
+        handler = new DepositCommandHandler(
+                walletService,
+                idempotencyService,
+                transactionRepository,
+                ledgerService,
+                eventPublisher,
+                meterRegistry
+        );
+    }
+
     private Wallet activeWallet(long amountCents) {
        Wallet wallet = Wallet.create(USER_ID,EUR);
        wallet.credit(amountCents);
