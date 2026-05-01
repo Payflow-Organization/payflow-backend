@@ -42,9 +42,8 @@ public class ReconciliationService {
     private void checkWalletCache() {
         List<WalletDiscrepancy> discrepancies = walletRepo.findCacheDiscrepancies();
         if(discrepancies.isEmpty()) return;
-        meterRegistry.counter("payflow.reconciliation.wallet.discrepancy",
-                "count", String.valueOf(discrepancies.size())
-        ).increment();
+        meterRegistry.counter("payflow.reconciliation.wallet.discrepancy")
+                .increment(discrepancies.size());
         discrepancies.forEach(d ->
                 log.error("[RECONCILIATION] Wallet cache mismatch: walletId={} cached={} computed={}",
                         d.walletId(), d.cachedBalance(), d.computedBalance())
