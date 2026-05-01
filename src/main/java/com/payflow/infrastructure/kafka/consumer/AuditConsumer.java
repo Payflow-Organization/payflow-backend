@@ -1,6 +1,6 @@
 package com.payflow.infrastructure.kafka.consumer;
 
-import org.jboss.logging.MDC;
+import org.slf4j.MDC;
 import org.springframework.messaging.handler.annotation.Header;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;

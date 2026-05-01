@@ -85,7 +85,8 @@ public class TransferCommandHandler {
             Transaction tx = processNew(command);
             currency = tx.getCurrency().getCurrencyCode();
             meterRegistry.counter("payflow.transfer.success",
-                    "currency", currency);
+                    "currency", currency
+            ).increment();
             return tx;
         }
         finally {

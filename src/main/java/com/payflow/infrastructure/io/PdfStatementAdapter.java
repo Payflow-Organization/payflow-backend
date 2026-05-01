@@ -34,7 +34,8 @@ public class PdfStatementAdapter implements PdfExportPort {
             document.add(header(walletId));
             document.add(transactionTable(rows));
             document.add(footer(rows));
-            log.info("PDF export completed pages={} walletId={}", pdf.getNumberOfPages(), walletId);        }
+            log.info("PDF export completed pages={} walletId={}", pdf.getNumberOfPages(), walletId);
+        }
     }
 
     private Paragraph header(UUID walletId) {
