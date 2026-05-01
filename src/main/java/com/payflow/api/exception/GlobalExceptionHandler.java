@@ -105,7 +105,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CannotAcquireLockException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ErrorResponse handleLockTimeout(CannotAcquireLockException ex) {
-        log.warn("Lock timeout acquired");
+        log.warn("Lock acquisition timed out", ex);
         return new ErrorResponse("LOCK_TIMEOUT", "Service is under high load, please retry");
     }
 
