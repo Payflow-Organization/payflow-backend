@@ -43,27 +43,29 @@ public class FreezeWalletCommandHandler {
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void handle(Command command) {
         Timer.Sample timer = Timer.start(meterRegistry);
-        Wallet wallet = null;
+        String currency = "unknown";
         try {
-            wallet = walletRepository.findByIdAndUserId(command.walletId(), command.userId())
+            Wallet wallet = walletRepository.findByIdAndUserId(command.walletId(), command.userId())
                     .orElseThrow(() -> {
-                        meterRegistry.counter("payment.wallet.freeze.failure",
+                        meterRegistry.counter("payflow.wallet.freeze.failure",
                                 CURRENCY_TAG, "unknown",
                                 "reason", "not_found"
-                        );
+                        ).increment();
                         return new WalletNotFoundException(command.walletId());
                     });
 
+            currency = wallet.getCurrency().getCurrencyCode();
             wallet.freeze();
-            meterRegistry.counter("payment.wallet.freeze.success",
-                    CURRENCY_TAG, wallet.getCurrency().getCurrencyCode()
-            );
-            log.warn("Wallet frozen walletId={} userId={}",
-                    command.walletId(), command.userId());
+
+            meterRegistry.counter("payflow.wallet.freeze.success",
+                    CURRENCY_TAG, currency
+            ).increment();
+
+            log.warn("Wallet frozen walletId={} userId={}", command.walletId(), command.userId());
             walletService.save(wallet);
         } finally {
-            timer.stop(Timer.builder("payment.wallet.freeze.latency")
-                    .tag(CURRENCY_TAG, wallet.getCurrency().getCurrencyCode())
+            timer.stop(Timer.builder("payflow.wallet.freeze.latency")
+                    .tag(CURRENCY_TAG, currency)
                     .register(meterRegistry));
         }
     }

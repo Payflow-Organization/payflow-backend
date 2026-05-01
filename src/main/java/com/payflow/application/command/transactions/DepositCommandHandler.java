@@ -71,6 +71,7 @@ public class DepositCommandHandler {
                         "command_type", "deposit");
                 log.warn("Duplicate DEPOSIT skipped idempotencyKey={} walletId={}",
                         command.idempotencyKey(), command.walletId());
+                return duplicate.get();
             }
             Transaction tx = processNew(command);
             currency = tx.getCurrency().getCurrencyCode();

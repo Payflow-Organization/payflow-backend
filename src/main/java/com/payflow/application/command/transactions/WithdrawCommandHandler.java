@@ -30,6 +30,11 @@ import java.util.UUID;
 public class WithdrawCommandHandler {
 
     private final WalletService walletService;
+    private final IdempotencyService idempotencyService;
+    private final TransactionRepository transactionRepository;
+    private final LedgerService ledgerService;
+    private final TransactionOutboxWriter eventPublisher;
+    private final MeterRegistry meterRegistry;
 
     public record Command(
             String idempotencyKey,
@@ -44,11 +49,7 @@ public class WithdrawCommandHandler {
         }
     }
 
-    private final IdempotencyService idempotencyService;
-    private final TransactionRepository transactionRepository;
-    private final LedgerService ledgerService;
-    private final TransactionOutboxWriter eventPublisher;
-    private final MeterRegistry meterRegistry;
+
 
     @Retryable(
             retryFor = {ObjectOptimisticLockingFailureException.class, PessimisticLockingFailureException.class},
@@ -61,7 +62,7 @@ public class WithdrawCommandHandler {
     )
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction handle(Command command) {
-
+        System.out.println("meterRegistry = " + meterRegistry);
         Timer.Sample timer = Timer.start(meterRegistry);
         String path = "duplicate";
         String currency = "unknown";
@@ -73,6 +74,7 @@ public class WithdrawCommandHandler {
                         "command_type", "withdraw");
                 log.warn("Duplicate WITHDRAW skipped idempotencyKey={} walletId={}",
                         command.idempotencyKey(), command.walletId());
+                return duplicate.get();
             }
             path = "new";
             Transaction tx = processNew(command);

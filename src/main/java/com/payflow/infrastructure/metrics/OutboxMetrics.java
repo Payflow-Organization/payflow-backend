@@ -11,9 +11,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OutboxMetrics {
     private final OutboxRepository outboxRepository;
+    private final MeterRegistry meterRegistry;
 
     @PostConstruct
-    public void registerGauges(MeterRegistry meterRegistry) {
+    public void registerGauges() {
         Gauge.builder("payflow.outbox.pending.size", outboxRepository,
                         OutboxRepository::countPending)
                 .description("Current count of PENDING outbox events")

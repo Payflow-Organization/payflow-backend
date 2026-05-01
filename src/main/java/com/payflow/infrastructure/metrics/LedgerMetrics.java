@@ -12,9 +12,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LedgerMetrics {
     private final LedgerEntryJpaRepository ledgerEntryRepository;
-
+    private final MeterRegistry meterRegistry;
     @PostConstruct
-    public void registerGauges(MeterRegistry meterRegistry) {
+    public void registerGauges() {
         Gauge.builder("payflow.ledger.imbalance", ledgerEntryRepository, repo ->
                 repo.findGlobalImbalance().doubleValue())
                 .description("SUM(CREDIT - DEBIT), should always be 0")
