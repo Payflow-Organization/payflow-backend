@@ -12,4 +12,5 @@ public interface OutboxRepository {
     List<OutboxEvent> findByStatusOrderByCreatedAtAsc(OutboxEventStatus status, Limit limit);
     Optional<OutboxEvent> findById(UUID id);
     OutboxEvent save(OutboxEvent outboxEvent);
+    long countPending();
 }

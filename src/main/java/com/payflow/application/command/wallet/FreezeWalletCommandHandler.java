@@ -6,6 +6,9 @@ import com.payflow.domain.model.wallet.WalletNotFoundException;
 import com.payflow.domain.repository.WalletRepository;
 
 import java.util.UUID;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.PessimisticLockingFailureException;
@@ -25,6 +28,8 @@ public class FreezeWalletCommandHandler {
 
     private final WalletRepository walletRepository;
     private final WalletService walletService;
+    private final MeterRegistry meterRegistry;
+    private static final String CURRENCY_TAG = "currency";
 
     @Retryable(
             retryFor = {ObjectOptimisticLockingFailureException.class, PessimisticLockingFailureException.class},
@@ -37,12 +42,29 @@ public class FreezeWalletCommandHandler {
     )
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void handle(Command command) {
-        Wallet wallet = walletRepository.findByIdAndUserId(command.walletId(), command.userId())
-                .orElseThrow(() -> new WalletNotFoundException(command.walletId()));
+        Timer.Sample timer = Timer.start(meterRegistry);
+        Wallet wallet = null;
+        try {
+            wallet = walletRepository.findByIdAndUserId(command.walletId(), command.userId())
+                    .orElseThrow(() -> {
+                        meterRegistry.counter("payment.wallet.freeze.failure",
+                                CURRENCY_TAG, "unknown",
+                                "reason", "not_found"
+                        );
+                        return new WalletNotFoundException(command.walletId());
+                    });
 
-        wallet.freeze();
-        log.warn("Wallet frozen walletId={} userId={}",
-                command.walletId(), command.userId());
-        walletService.save(wallet);
+            wallet.freeze();
+            meterRegistry.counter("payment.wallet.freeze.success",
+                    CURRENCY_TAG, wallet.getCurrency().getCurrencyCode()
+            );
+            log.warn("Wallet frozen walletId={} userId={}",
+                    command.walletId(), command.userId());
+            walletService.save(wallet);
+        } finally {
+            timer.stop(Timer.builder("payment.wallet.freeze.latency")
+                    .tag(CURRENCY_TAG, wallet.getCurrency().getCurrencyCode())
+                    .register(meterRegistry));
+        }
     }
 }

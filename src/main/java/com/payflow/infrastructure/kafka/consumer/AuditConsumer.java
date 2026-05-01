@@ -1,5 +1,7 @@
 package com.payflow.infrastructure.kafka.consumer;
 
+import org.jboss.logging.MDC;
+import org.springframework.messaging.handler.annotation.Header;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import com.payflow.domain.model.audit.AuditLog;
@@ -30,7 +32,15 @@ public class AuditConsumer {
             groupId = "${payflow.kafka.consumer.audit-group}"
     )
     @Transactional
-    public void handle(String payload) {
+    public void handle(String payload,
+                       @Header(value = "traceparent", required = false) String traceparent) {
+        if (traceparent != null) {
+            String[] parts = traceparent.split("-");
+            if (parts.length == 4) {
+                MDC.put("trace.id", parts[1]);
+                MDC.put("span.id", parts[2]);
+            }
+        }
         try {
             TransactionCreatedPayload event = objectMapper.readValue(payload, TransactionCreatedPayload.class);
             if (processedEventRepository.existsByIdEventIdAndIdConsumerGroup(event.transactionId(), CONSUMER_GROUP)) {
@@ -57,6 +67,9 @@ public class AuditConsumer {
 
         } catch (JacksonException e) {
             throw new IllegalStateException("Failed to deserialize payload", e);
+        }
+        finally {
+            MDC.clear();
         }
     }
 }

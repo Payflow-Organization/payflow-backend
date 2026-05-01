@@ -13,6 +13,8 @@ import com.payflow.domain.model.wallet.WalletStatus;
 import com.payflow.domain.repository.TransactionRepository;
 import com.payflow.domain.repository.WalletRepository;
 import com.payflow.infrastructure.kafka.TransactionOutboxWriter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.PessimisticLockingFailureException;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -50,6 +53,7 @@ public class TransferCommandHandler {
     private final TransactionRepository transactionRepository;
     private final LedgerService ledgerService;
     private final TransactionOutboxWriter eventPublisher;
+    private final MeterRegistry meterRegistry;
 
     @Retryable(
             retryFor = {ObjectOptimisticLockingFailureException.class, PessimisticLockingFailureException.class},
@@ -63,17 +67,37 @@ public class TransferCommandHandler {
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction handle(Command command) {
         // STEP 1: Idempotency
-        return idempotencyService.findDuplicate(command.idempotencyKey())
-                .map(tx -> {
-                            log.warn("Duplicate TRANSFER skipped idempotencyKey={} fromWalletId={} toWalletId={}",
-                                    command.idempotencyKey(), command.sourceWalletId(), command.destinationWalletId());
-                            return tx;
-                        }
-                    )
-                .orElseGet(() -> processNew(command));
+        Timer.Sample timer = Timer.start(meterRegistry);
+        String currency = "unknown";
+        String path = "duplicate";
+
+        try {
+            // STEP 1: Idempotency
+            Optional<Transaction> duplicate = idempotencyService.findDuplicate(command.idempotencyKey());
+            if (duplicate.isPresent()) {
+                meterRegistry.counter("payflow.idempotency.duplicate",
+                        "command_type", "transfer"
+                ).increment();
+                log.warn("Duplicate TRANSFER skipped idempotencyKey={}", command.idempotencyKey());
+                return duplicate.get();
+            }
+            path = "new";
+            Transaction tx = processNew(command);
+            currency = tx.getCurrency().getCurrencyCode();
+            meterRegistry.counter("payflow.transfer.success",
+                    "currency", currency);
+            return tx;
+        }
+        finally {
+            timer.stop(Timer.builder("payflow.transfer.latency")
+                    .tag("currency", currency)
+                    .tag("path", path)
+                    .register(meterRegistry));
+        }
     }
 
     private Transaction processNew(Command command) {
+
         // STEP 2: Validate — no self-transfer
         if (command.sourceWalletId().equals(command.destinationWalletId())) {
             throw new InvalidWalletOperationException(command.sourceWalletId());

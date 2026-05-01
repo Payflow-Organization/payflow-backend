@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -91,4 +92,11 @@ public interface LedgerEntryJpaRepository extends JpaRepository<LedgerEntry, UUI
             @Param("from") Instant from,
             @Param("to") Instant to
     );
+    @Query(value = """
+    SELECT
+        COALESCE(SUM(amount) FILTER (WHERE entry_type = 'CREDIT'), 0) -
+        COALESCE(SUM(amount) FILTER (WHERE entry_type = 'DEBIT'),  0)
+    FROM ledger_entries
+    """, nativeQuery = true)
+    BigDecimal findGlobalImbalance();
 }
