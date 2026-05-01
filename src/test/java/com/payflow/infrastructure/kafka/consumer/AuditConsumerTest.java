@@ -52,7 +52,7 @@ class AuditConsumerTest {
         when(processedEventRepository.existsByIdEventIdAndIdConsumerGroup(EVENT_ID, AUDIT_GROUP)).thenReturn(false);
 
         // When
-        consumer.handle(validPayload);
+        consumer.handle(validPayload,null);
 
         // Then
         ArgumentCaptor<AuditLog> auditCaptor = ArgumentCaptor.forClass(AuditLog.class);
@@ -70,7 +70,7 @@ class AuditConsumerTest {
         when(processedEventRepository.existsByIdEventIdAndIdConsumerGroup(EVENT_ID, AUDIT_GROUP)).thenReturn(true);
 
         // When
-        consumer.handle(validPayload);
+        consumer.handle(validPayload,null);
 
         // Then
         verify(auditLogRepository, never()).save(any());
@@ -83,7 +83,7 @@ class AuditConsumerTest {
         when(processedEventRepository.existsByIdEventIdAndIdConsumerGroup(EVENT_ID, AUDIT_GROUP)).thenReturn(false);
 
         // When
-        consumer.handle(validPayload);
+        consumer.handle(validPayload,null);
 
         // Then — audit group is independent, writes its own processed_events row
         verify(auditLogRepository).save(any(AuditLog.class));
@@ -96,7 +96,7 @@ class AuditConsumerTest {
         String invalidPayload = "not-valid-json";
 
         // When / Then
-        assertThatThrownBy(() -> consumer.handle(invalidPayload))
+        assertThatThrownBy(() -> consumer.handle(invalidPayload, null))
                 .isInstanceOf(IllegalStateException.class);
         verify(auditLogRepository, never()).save(any());
     }
@@ -108,7 +108,7 @@ class AuditConsumerTest {
         when(auditLogRepository.save(any())).thenThrow(new RuntimeException());
 
         // When / Then
-        assertThatThrownBy(() -> consumer.handle(validPayload))
+        assertThatThrownBy(() -> consumer.handle(validPayload,null))
                 .isInstanceOf(RuntimeException.class);
         verify(processedEventRepository, never()).save(any());
     }
