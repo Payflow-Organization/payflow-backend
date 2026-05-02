@@ -1,5 +1,6 @@
 package com.payflow.infrastructure.security;
 
+import com.payflow.application.port.TokenPort;
 import com.payflow.domain.model.user.User;
 import com.payflow.domain.model.user.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,5 +53,41 @@ class JwtServiceTest {
         String token = jwtService.generateAccessToken(userDetails);
 
         assertThat(jwtService.validateToken(token, userDetails)).isFalse();
+    }
+
+    @Test
+    void shouldExtractTokenDetailsFromValidBearerToken() {
+        String token = jwtService.generateAccessToken(userDetails);
+
+        TokenPort.TokenDetails details = jwtService.extractTokenDetails("Bearer " + token);
+
+        assertThat(details).isNotNull();
+        assertThat(details.jti()).isNotNull();
+        assertThat(details.ttlSeconds()).isPositive();
+    }
+
+    @Test
+    void shouldReturnNullForNullBearerToken() {
+        TokenPort.TokenDetails details = jwtService.extractTokenDetails(null);
+
+        assertThat(details).isNull();
+    }
+
+    @Test
+    void shouldReturnNullForMissingBearerPrefix() {
+        TokenPort.TokenDetails details = jwtService.extractTokenDetails("notavalidbearertoken");
+
+        assertThat(details).isNull();
+    }
+
+    @Test
+    void shouldReturnZeroTtlForExpiredToken() {
+        ReflectionTestUtils.setField(jwtService, "jwtExpiration", -1000L);
+        String token = jwtService.generateAccessToken(userDetails);
+
+        TokenPort.TokenDetails details = jwtService.extractTokenDetails("Bearer " + token);
+
+        assertThat(details).isNotNull();
+        assertThat(details.ttlSeconds()).isZero();
     }
 }

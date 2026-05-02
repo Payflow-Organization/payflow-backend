@@ -26,7 +26,7 @@ public class Wallet {
     @Column(nullable = false, updatable = false, length = 3)
     private Currency currency;
 
-    @Column(nullable = false, precision = 19, scale = 4)
+    @Column(nullable = false)
     private Long currentBalance;
 
     @Enumerated(EnumType.STRING)

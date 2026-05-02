@@ -101,7 +101,7 @@ class AnalyticsQueryHandlerTest {
     void shouldReturnSpendingBreakdownForAuthenticatedOwner() {
         // Given
         var query    = new SpendingByCategoryQuery(WALLET_ID, USER_ID, LocalDate.of(2025, 4, 1), LocalDate.of(2025, 4, 30));
-        var expected = List.of(new SpendingByCategoryResponse(TransactionType.WITHDRAW.name(), 3000L, 2L));
+        var expected = List.of(new SpendingByCategoryResponse(TransactionType.WITHDRAW, 3000L, 2L));
 
         when(walletRepository.findById(WALLET_ID)).thenReturn(Optional.of(walletOwnedByUser()));
         when(ledgerEntryRepository.findSpendingByCategory(eq(WALLET_ID), any(), any())).thenReturn(expected);

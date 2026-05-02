@@ -7,4 +7,6 @@ public interface TokenPort {
     boolean validateToken(String token, UserDetails userDetails);
     String extractUsername(String token);
     String extractBearerToken(String authorizationHeader);
+    TokenDetails extractTokenDetails(String bearerToken);
+    record TokenDetails(String jti, long ttlSeconds) {}
 }

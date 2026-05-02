@@ -62,7 +62,6 @@ public class WithdrawCommandHandler {
     )
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction handle(Command command) {
-        System.out.println("meterRegistry = " + meterRegistry);
         Timer.Sample timer = Timer.start(meterRegistry);
         String path = "duplicate";
         String currency = "unknown";
@@ -71,7 +70,7 @@ public class WithdrawCommandHandler {
             Optional<Transaction> duplicate = idempotencyService.findDuplicate(command.idempotencyKey());
             if (duplicate.isPresent()) {
                 meterRegistry.counter("payflow.idempotency.duplicate",
-                        "command_type", "withdraw");
+                        "command_type", "withdraw").increment();
                 log.warn("Duplicate WITHDRAW skipped idempotencyKey={} walletId={}",
                         command.idempotencyKey(), command.walletId());
                 return duplicate.get();
@@ -80,7 +79,7 @@ public class WithdrawCommandHandler {
             Transaction tx = processNew(command);
             currency = tx.getCurrency().getCurrencyCode();
             meterRegistry.counter("payflow.transfer.success",
-                    "currency", currency);
+                    "currency", currency).increment();
             return tx;
         }
         finally{

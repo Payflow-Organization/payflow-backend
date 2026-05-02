@@ -24,7 +24,7 @@ public class OutboxService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<OutboxEvent> fetchPending(Integer batchSize) {
-        return outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxEventStatus.PENDING, Limit.of(batchSize));
+        return outboxRepository.findByStatusOrderByCreatedAtAsc(OutboxEventStatus.PENDING, batchSize);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
