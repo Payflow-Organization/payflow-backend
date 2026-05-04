@@ -78,7 +78,7 @@ public class WithdrawCommandHandler {
             path = "new";
             Transaction tx = processNew(command);
             currency = tx.getCurrency().getCurrencyCode();
-            meterRegistry.counter("payflow.transfer.success",
+            meterRegistry.counter("payflow.withdraw.success",
                     "currency", currency).increment();
             return tx;
         }
