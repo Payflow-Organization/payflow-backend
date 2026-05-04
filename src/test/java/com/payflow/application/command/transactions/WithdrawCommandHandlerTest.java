@@ -104,7 +104,14 @@ class WithdrawCommandHandlerTest {
         verify(eventPublisher).publishTransactionCreated(any(Transaction.class),eq(USER_ID));
     }
 
-
+    @Test
+    void shouldThrowWhenAmountIsNotPositive() {
+        assertThatThrownBy(() -> new WithdrawCommandHandler.Command("idem-key-1", WALLET_ID, USER_ID, 0L))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new WithdrawCommandHandler.Command("idem-key-1", WALLET_ID, USER_ID, -1L))
+                .isInstanceOf(IllegalArgumentException.class);
+        verifyNoInteractions(walletService, idempotencyService, transactionRepository);
+    }
     @Test
     void shouldReturnExistingTransactionOnDuplicateKey() {
         // Given

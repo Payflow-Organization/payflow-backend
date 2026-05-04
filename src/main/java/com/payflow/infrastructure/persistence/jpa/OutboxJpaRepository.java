@@ -3,6 +3,7 @@ package com.payflow.infrastructure.persistence.jpa;
 import com.payflow.domain.model.outbox.OutboxEvent;
 import com.payflow.domain.model.outbox.OutboxEventStatus;
 import com.payflow.domain.repository.OutboxRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -10,9 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OutboxJpaRepository extends JpaRepository<OutboxEvent, UUID>, OutboxRepository {
-    @Override
-    @Query("SELECT e FROM OutboxEvent e WHERE e.status = :status ORDER BY e.createdAt ASC LIMIT :limit")
-    List<OutboxEvent> findByStatusOrderByCreatedAtAsc(OutboxEventStatus status, int limit);
+    List<OutboxEvent> findByStatusOrderByCreatedAtAsc(OutboxEventStatus status, Pageable pageable);
 
     @Override
     @Query("SELECT COUNT(e) FROM OutboxEvent e WHERE e.status = 'PENDING'")

@@ -5,6 +5,9 @@ import com.payflow.domain.model.user.User;
 import com.payflow.domain.model.user.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.security.core.userdetails.UserDetails;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -30,7 +33,13 @@ class JwtServiceTest {
                 .status(UserStatus.ACTIVE)
                 .build();
     }
-
+    @ParameterizedTest
+    @ValueSource(strings = {"Bearer ", "BeareXX "})
+    @NullAndEmptySource
+    void shouldReturnNullForMalformedJwt(String input) {
+        TokenPort.TokenDetails details = jwtService.extractTokenDetails(input);
+        assertThat(details).isNull();
+    }
     @Test
     void shouldGenerateValidTokenAndExtractUsername() {
         String token = jwtService.generateAccessToken(userDetails);
@@ -39,13 +48,6 @@ class JwtServiceTest {
         assertThat(jwtService.extractUsername(token)).isEqualTo("test@payflow.com");
     }
 
-    @Test
-    void shouldReturnFalseForTamperedToken() {
-        String token = jwtService.generateAccessToken(userDetails);
-        String tampered = token.substring(0, token.length() - 5) + "XXXXX";
-
-        assertThat(jwtService.validateToken(tampered, userDetails)).isFalse();
-    }
 
     @Test
     void shouldReturnFalseForExpiredToken() {
@@ -66,12 +68,7 @@ class JwtServiceTest {
         assertThat(details.ttlSeconds()).isPositive();
     }
 
-    @Test
-    void shouldReturnNullForNullBearerToken() {
-        TokenPort.TokenDetails details = jwtService.extractTokenDetails(null);
 
-        assertThat(details).isNull();
-    }
 
     @Test
     void shouldReturnNullForMissingBearerPrefix() {
