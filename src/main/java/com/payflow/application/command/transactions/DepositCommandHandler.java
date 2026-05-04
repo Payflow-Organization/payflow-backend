@@ -68,15 +68,16 @@ public class DepositCommandHandler {
             Optional<Transaction> duplicate = idempotencyService.findDuplicate(command.idempotencyKey());
             if(duplicate.isPresent()){
                 meterRegistry.counter("payflow.idempotency.duplicate",
-                        "command_type", "deposit");
+                        "command_type", "deposit").increment();
                 log.warn("Duplicate DEPOSIT skipped idempotencyKey={} walletId={}",
                         command.idempotencyKey(), command.walletId());
                 return duplicate.get();
             }
+            path = "new";
             Transaction tx = processNew(command);
             currency = tx.getCurrency().getCurrencyCode();
-            meterRegistry.counter("payflow.transfer.success",
-                    "currency", currency);
+            meterRegistry.counter("payflow.deposit.success",
+                    "currency", currency).increment();
             return tx;
         }
         finally {

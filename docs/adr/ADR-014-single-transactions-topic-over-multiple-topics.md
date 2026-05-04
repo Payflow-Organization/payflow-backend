@@ -1,21 +1,26 @@
 # ADR-014: Single transactions Topic over Multiple Topics
 
 ## Status
-Accepted — Week 2
+Accepted — Week 2; updated Week 3 (AnalyticsConsumer removed — analytics moved to direct
+ledger query via TimescaleDB hypertable, see ADR-017)
 
 ## Context
-PayFlow has three independent consumers of transaction events: audit logging,
-analytics aggregation, and notifications. The implementation guide suggests
-three separate Kafka topics: `transactions`, `analytics`, and `notifications`.
+PayFlow plans two Kafka consumers of transaction events: audit logging and notifications.
+`AuditConsumer` is implemented. `NotificationConsumer` is planned but not yet built —
+the topic design is chosen now so the consumer can be added without any publisher changes.
+Analytics queries run directly against the `ledger_entries` hypertable (ADR-017) and
+do not consume from Kafka. The implementation guide suggested three separate Kafka topics:
+`transactions`, `analytics`, and `notifications`.
 
 The question is whether fan-out to multiple consumers is better served by
 multiple topics or by a single topic with multiple consumer groups.
 
 ## Decision
-A single `transactions` topic is used. All consumers — `AuditConsumer`,
-`AnalyticsConsumer`, and `NotificationConsumer` — read from the same topic
-using independent consumer groups (`audit-group`, `analytics-group`,
-`notification-group`). The `OutboxRelay` publishes once per event.
+A single `transactions` topic is used. `AuditConsumer` reads from it under the
+`audit-group` consumer group. `NotificationConsumer` will read from the same topic under
+`notification-group` when implemented. The `OutboxRelay` publishes once per event regardless
+of how many consumers exist. Analytics does not consume from Kafka; it queries
+`ledger_entries` directly (ADR-017).
 
 ## Alternatives Considered
 
@@ -34,7 +39,7 @@ using independent consumer groups (`audit-group`, `analytics-group`,
 **Single topic with multiple consumer groups (chosen)**
 - `OutboxRelay` publishes once — one Kafka write per transaction
 - Each consumer group maintains its own offset independently — `audit-group`
-  falling behind does not affect `analytics-group`
+  falling behind does not affect `notification-group`
 - A crashed consumer resumes from its last committed offset without
   affecting other consumer groups
 - Adding a new consumer requires no publisher changes — register a new
@@ -55,8 +60,8 @@ publisher complexity and introduces partial failure modes with no benefit.
 
 The three-topic approach would be appropriate if the topics carried different
 event types with different schemas, different retention requirements, or
-different access controls. None of those conditions apply in PayFlow — all
-three consumers read `TransactionCreated` with the same payload, the same
+different access controls. None of those conditions apply in PayFlow — both
+Kafka consumers read `TransactionCreated` with the same payload, the same
 retention window, and no access control differentiation.
 
 ## Scaling Path
@@ -84,10 +89,8 @@ group scales its partition assignment independently.
 ## Consequences
 - `OutboxRelay` publishes to `transactions` topic only — one Kafka write
   per committed transaction
-- `AuditConsumer`, `AnalyticsConsumer`, `NotificationConsumer` each declare
-  a unique `groupId` — offset tracking is fully independent
+- `AuditConsumer` and `NotificationConsumer` each declare a unique `groupId` —
+  offset tracking is fully independent
 - No `analytics` or `notifications` Kafka topics are created
-- In Week 3 when `AnalyticsConsumer` is introduced, no topic infrastructure
-  changes are required — it registers against the existing `transactions` topic
 - If a semantically distinct event type emerges (e.g. `WalletFrozen`),
   a new topic is introduced at that point — not preemptively

@@ -26,7 +26,7 @@ public class ReconciliationService {
         checkGlobalBalance();
         checkWalletCache();
         log.info("[RECONCILIATION] Reconciliation completed");
-        meterRegistry.counter("reconciliation.completed.run").increment();
+        meterRegistry.counter("payflow.reconciliation.completed.run").increment();
     }
 
     private void checkGlobalBalance() {

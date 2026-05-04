@@ -72,11 +72,16 @@ and recording `event_id` would cause the event to be reprocessed on restart.
 - `processed_events` table: `event_id VARCHAR(255) PRIMARY KEY, processed_at TIMESTAMPTZ`
 - Every consumer checks `processed_events` before processing and inserts
   within the same `@Transactional` block
-- In Week 3 when `AnalyticsConsumer` is introduced, a `consumer_group`
-  column will be added — the same `event_id` must be processable by
-  multiple independent consumer groups
+- `consumer_group` column added so the same `event_id` is independently
+  processable by `audit-group` and any future consumer groups
 - `processed_events` grows unboundedly without pruning — a nightly cleanup
-  job removing entries older than Kafka's retention window is deferred to
-  Week 3
+  job removing entries older than Kafka's retention window is deferred
 - Consumer processing is slightly slower due to the extra read and write
   per event — acceptable given the correctness guarantee it provides
+- Events that fail after all retries (3 attempts, 500 ms apart via
+  `DefaultErrorHandler` + `FixedBackOff`) are published to `transactions.DLT`
+  by `DeadLetterPublishingRecoverer` rather than being silently dropped;
+  the DLT topic is declared in `KafkaTopicConfig` with the same partition
+  count as the source topic; failed events require manual inspection and
+  reprocessing — no automatic reprocessing is attempted to avoid masking
+  persistent failures (e.g. deserialization bugs, schema mismatches)

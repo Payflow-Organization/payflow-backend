@@ -4,7 +4,6 @@ import com.payflow.api.dto.response.BalanceResponse;
 import com.payflow.domain.model.wallet.Wallet;
 import com.payflow.domain.model.wallet.WalletNotFoundException;
 import com.payflow.domain.repository.WalletRepository;
-import com.payflow.infrastructure.persistence.jpa.WalletJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

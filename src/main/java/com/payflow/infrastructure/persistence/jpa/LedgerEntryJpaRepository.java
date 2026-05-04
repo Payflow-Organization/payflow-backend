@@ -37,35 +37,36 @@ public interface LedgerEntryJpaRepository extends JpaRepository<LedgerEntry, UUI
     @Query(value = """
         SELECT
             t.type                                        AS transactionType,
-            SUM(le.amount)::bigint                        AS totalCents,
-            COUNT(DISTINCT le.transaction_id)::bigint     AS count
-        FROM ledger_entries le
-        JOIN transactions t ON t.id = le.transaction_id
-        WHERE le.wallet_id   = :walletId
-          AND le.created_at >= :from
-          AND le.created_at  < :to
-          AND le.entry_type  = 'DEBIT'
+            SUM(le.amount)                     AS totalCents,
+            COUNT(DISTINCT le.transactionId)     AS count
+        FROM LedgerEntry le
+        JOIN Transaction t ON t.id = le.transactionId
+        WHERE le.walletId   = :walletId
+          AND le.createdAt >= :from
+          AND le.createdAt  < :to
+          AND le.entryType  = 'DEBIT'
         GROUP BY t.type
-        ORDER BY totalCents DESC
-        """, nativeQuery = true)
+        ORDER BY SUM(le.amount) DESC
+        """)
     List<SpendingByCategoryResponse> findSpendingByCategory(
             @Param("walletId") UUID walletId,
             @Param("from")     Instant from,
             @Param("to")       Instant to
     );
 
-    @Query(value = """
-        SELECT
-            COALESCE(SUM(amount) FILTER (WHERE entry_type = 'CREDIT'), 0)::bigint AS totalDepositsCents,
-            COALESCE(SUM(amount) FILTER (WHERE entry_type = 'DEBIT'),  0)::bigint AS totalWithdrawalsCents,
-            (COALESCE(SUM(amount) FILTER (WHERE entry_type = 'CREDIT'), 0) -
-             COALESCE(SUM(amount) FILTER (WHERE entry_type = 'DEBIT'),  0))::bigint AS netCents,
-            COUNT(DISTINCT transaction_id)::bigint                                  AS transactionCount
-        FROM ledger_entries
-        WHERE wallet_id   = :walletId
-          AND created_at >= :from
-          AND created_at  < :to
-        """, nativeQuery = true)
+    @Query("""
+    SELECT new com.payflow.api.dto.response.MonthlySummaryResponse(
+        COALESCE(SUM(le.amount) FILTER (WHERE le.entryType = 'CREDIT'), 0),
+        COALESCE(SUM(le.amount) FILTER (WHERE le.entryType = 'DEBIT'),  0),
+        COALESCE(SUM(le.amount) FILTER (WHERE le.entryType = 'CREDIT'), 0) -
+        COALESCE(SUM(le.amount) FILTER (WHERE le.entryType = 'DEBIT'),  0),
+        COUNT(DISTINCT le.transactionId)
+    )
+    FROM LedgerEntry le
+    WHERE le.walletId = :walletId
+      AND le.createdAt >= :from
+      AND le.createdAt < :to
+    """)
     MonthlySummaryResponse findMonthlySummary(
             @Param("walletId") UUID walletId,
             @Param("from")     Instant from,
@@ -92,9 +93,9 @@ public interface LedgerEntryJpaRepository extends JpaRepository<LedgerEntry, UUI
     );
     @Query(value = """
     SELECT
-        COALESCE(SUM(amount) FILTER (WHERE entry_type = 'CREDIT'), 0)::bigint  -
-        COALESCE(SUM(amount) FILTER (WHERE entry_type = 'DEBIT'),  0)::bigint
-    FROM ledger_entries
-    """, nativeQuery = true)
+        COALESCE(SUM(amount) FILTER (WHERE entryType = 'CREDIT'), 0)  -
+        COALESCE(SUM(amount) FILTER (WHERE entryType = 'DEBIT'),  0)
+    FROM LedgerEntry
+    """)
     long findGlobalImbalance();
 }

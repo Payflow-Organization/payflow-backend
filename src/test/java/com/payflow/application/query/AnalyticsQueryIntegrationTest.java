@@ -136,11 +136,11 @@ class AnalyticsQueryIntegrationTest extends BaseIntegrationTest {
         // Then
         assertThat(result).hasSize(2);
 
-        var withdraw = result.stream().filter(r -> Objects.equals(r.transactionType(), "WITHDRAW")).findFirst().orElseThrow();
+        var withdraw = result.stream().filter(r -> Objects.equals(r.transactionType(), TransactionType.WITHDRAW)).findFirst().orElseThrow();
         assertThat(withdraw.totalCents()).isEqualTo(2000L);
         assertThat(withdraw.count()).isEqualTo(1L);
 
-        var transfer = result.stream().filter(r -> Objects.equals(r.transactionType(), "TRANSFER")).findFirst().orElseThrow();
+        var transfer = result.stream().filter(r -> Objects.equals(r.transactionType(), TransactionType.TRANSFER)).findFirst().orElseThrow();
         assertThat(transfer.totalCents()).isEqualTo(1000L);
         assertThat(transfer.count()).isEqualTo(1L);
     }
@@ -161,7 +161,7 @@ class AnalyticsQueryIntegrationTest extends BaseIntegrationTest {
 
         // Then — only DEBIT entries appear, DEPOSIT credit is excluded
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().transactionType()).isEqualTo("WITHDRAW");
+        assertThat(result.getFirst().transactionType()).isEqualTo(TransactionType.WITHDRAW);
     }
 
     // ------------------------------------------------------------------ monthly summary

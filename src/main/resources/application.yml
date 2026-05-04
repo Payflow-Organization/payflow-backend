@@ -47,7 +47,6 @@ payflow:
     topics:
       transactions: transactions
     consumer:
-      analytics-group: analytics-${spring.profiles.active}
       audit-group: audit-${spring.profiles.active}
   outbox:
     poll-interval-ms: 500
