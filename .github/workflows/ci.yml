@@ -33,7 +33,7 @@ jobs:
         run: chmod +x mvnw
 
       - name: Build, test and analyze
-        run: ./mvnw -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+        run: ./mvnw -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.branch.name=main
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
