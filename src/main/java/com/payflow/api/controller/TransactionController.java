@@ -6,6 +6,8 @@ import com.payflow.application.command.transactions.DepositCommandHandler;
 import com.payflow.application.command.transactions.TransferCommandHandler;
 import com.payflow.application.command.transactions.WithdrawCommandHandler;
 import com.payflow.application.query.TransactionQueryHandler;
+import com.payflow.domain.model.transaction.TransactionStatus;
+import com.payflow.domain.model.transaction.TransactionType;
 import com.payflow.domain.model.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +31,13 @@ public class TransactionController {
 
 
     @GetMapping
-    public Page<TransactionResponse> getTransactions(Pageable pageable,
+    public Page<TransactionResponse> getTransactions(Pageable pageable , @RequestParam(required = false) UUID walletId,
+                                                     @RequestParam(required = false) TransactionType type,
+                                                     @RequestParam(required = false) TransactionStatus status,
                                                      @AuthenticationPrincipal User user) {
         return transactionQueryHandler
                 .handle(new TransactionQueryHandler
-                        .GetTransactionsQuery(user.getId(), pageable));
+                        .GetTransactionsQuery(user.getId(), walletId, type, status, pageable));
     }
 
     @GetMapping("/{id}")
