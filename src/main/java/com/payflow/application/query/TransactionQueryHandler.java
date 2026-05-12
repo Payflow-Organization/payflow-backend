@@ -31,13 +31,16 @@ public class TransactionQueryHandler {
 
     @Transactional(readOnly = true)
     public Page<TransactionResponse> handle(GetTransactionsQuery query) {
-        if (query.walletId() != null) {
-            walletRepository.findByIdAndUserId(query.walletId(), query.userId())
-                    .orElseThrow(() -> new WalletNotFoundException(query.walletId()));
+        if (query.walletId() == null) {
+            throw new IllegalArgumentException("walletId is required for transaction queries");
         }
+
+        walletRepository.findByIdAndUserId(query.walletId(), query.userId())
+                .orElseThrow(() -> new WalletNotFoundException(query.walletId()));
+
         return repository
                 .findFiltered(
-                        query.walletId(),   // null → ignored by the query
+                        query.walletId(),
                         query.type(),
                         query.status(),
                         query.pageable())
