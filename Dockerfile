@@ -8,10 +8,10 @@ COPY .mvn .mvn
 COPY mvnw .
 RUN chmod +x mvnw
 
-RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -B
+RUN --mount=type=cache,target=/root/.m2,id=maven \ ./mvnw dependency:go-offline -B
 COPY src src
 
-RUN --mount=type=cache,target=/root/.m2 ./mvnw clean package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2,id=maven \ ./mvnw clean package -DskipTests -B
 
 #Runtime
 FROM eclipse-temurin:25-jre-alpine
