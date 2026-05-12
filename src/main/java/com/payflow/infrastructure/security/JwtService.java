@@ -48,6 +48,15 @@ public class JwtService extends TokenService implements TokenPort {
         return extractClaim(token, Claims::getId);
     }
 
+    @Override
+    public TokenDetails extractTokenDetails(String rawToken) {
+        String jti = extractJti(rawToken);
+        Date expiration = extractExpiration(rawToken);
+        if (jti == null || expiration == null) return null;
+        long ttlSeconds = Math.max(0, (expiration.getTime() - System.currentTimeMillis()) / 1000);
+        return new TokenDetails(jti, ttlSeconds);
+    }
+
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         if (claims == null) return null;

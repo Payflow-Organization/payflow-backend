@@ -1,5 +1,6 @@
 package com.payflow.application.command.auth;
 
+import com.payflow.api.dto.response.AuthTokens;
 import com.payflow.api.dto.response.AuthenticationResponse;
 import com.payflow.application.port.TokenPort;
 import com.payflow.application.port.UserPort;
@@ -50,11 +51,11 @@ class RefreshCommandHandlerTest {
         when(refreshTokenService.issue(userId)).thenReturn("new-refresh");
 
         // When
-        AuthenticationResponse response = handler.handle(new RefreshCommandHandler.Command("old-token"));
+        AuthTokens response = handler.handle(new RefreshCommandHandler.Command("old-token"));
 
         // Then
-        assertThat(response.getAccessToken()).isEqualTo("new-access");
-        assertThat(response.getRefreshToken()).isEqualTo("new-refresh");
+        assertThat(response.accessToken()).isEqualTo("new-access");
+        assertThat(response.refreshToken()).isEqualTo("new-refresh");
         verify(refreshTokenService).revoke("old-token");
     }
 

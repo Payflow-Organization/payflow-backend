@@ -1,5 +1,6 @@
 package com.payflow.application.command.auth;
 
+import com.payflow.api.dto.response.AuthTokens;
 import com.payflow.api.dto.response.AuthenticationResponse;
 import com.payflow.application.port.TokenPort;
 import com.payflow.application.port.UserPort;
@@ -18,7 +19,7 @@ public class RefreshCommandHandler {
     private final UserPort userPort;
     private final RefreshTokenService refreshTokenService;
     public record Command(String rawRefreshToken) {}
-    public AuthenticationResponse handle(Command command)
+    public AuthTokens handle(Command command)
     {
         RefreshToken token = refreshTokenService.validate(command.rawRefreshToken());
         refreshTokenService.revoke(command.rawRefreshToken());
@@ -29,11 +30,10 @@ public class RefreshCommandHandler {
         String newRefreshToken = refreshTokenService.issue(token.getUserId());
 
         log.info("Refresh token rotated userId={}", token.getUserId());
-        return AuthenticationResponse
-                .builder()
-                .email(userDetails.getUsername())
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .build();
+        return new AuthTokens(
+                newAccessToken,
+                newRefreshToken,
+                userDetails.getUsername()
+        );
     }
 }

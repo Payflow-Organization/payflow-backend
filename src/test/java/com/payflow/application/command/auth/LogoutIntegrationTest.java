@@ -3,6 +3,7 @@ package com.payflow.application.command.auth;
 import com.payflow.BaseIntegrationTest;
 import com.payflow.api.dto.request.LogoutRequest;
 import com.payflow.api.dto.request.RegisterRequest;
+import com.payflow.api.dto.response.AuthTokens;
 import com.payflow.api.dto.response.AuthenticationResponse;
 import com.payflow.domain.model.token.RefreshToken;
 import com.payflow.domain.repository.RefreshTokenRepository;
@@ -28,7 +29,7 @@ class LogoutIntegrationTest extends BaseIntegrationTest {
         // Setup — register and get tokens
         String email = "logout-" + UUID.randomUUID() + "@payflow.com";
 
-        AuthenticationResponse response = restTestClient.post()
+        AuthTokens response = restTestClient.post()
                 .uri("/api/v1/auth/register")
                 .body(RegisterRequest.builder()
                         .email(email)
@@ -37,20 +38,20 @@ class LogoutIntegrationTest extends BaseIntegrationTest {
                         .build())
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(AuthenticationResponse.class)
+                .expectBody(AuthTokens.class)
                 .returnResult()
                 .getResponseBody();
 
         // When
         restTestClient.post()
                 .uri("/api/v1/auth/logout")
-                .body(new LogoutRequest(response.getRefreshToken()))
-                .header("Authorization", "Bearer " + response.getAccessToken())
+                .body(new LogoutRequest(response.refreshToken()))
+                .header("Authorization", "Bearer " + response.accessToken())
                 .exchange()
                 .expectStatus().isNoContent();
 
         // Then — refresh token revoked in DB
-        String hash = sha256Hex(response.getRefreshToken());
+        String hash = sha256Hex(response.refreshToken());
         assertThat(refreshTokenRepository.findByTokenHash(hash))
                 .isPresent()
                 .get()
