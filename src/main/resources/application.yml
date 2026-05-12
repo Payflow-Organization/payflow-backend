@@ -17,11 +17,11 @@ spring:
   datasource:
     write:
       url: ${DB_WRITE_URL}
-      username: ${DB_USERNAME}
+      username: ${DB_USER}
       password: ${DB_PASSWORD}
     read:
       url: ${DB_READ_URL}
-      username: ${DB_USERNAME}
+      username: ${DB_USER}
       password: ${DB_PASSWORD}
 
   kafka:
