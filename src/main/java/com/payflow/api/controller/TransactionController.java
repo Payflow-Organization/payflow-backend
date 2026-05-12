@@ -31,10 +31,12 @@ public class TransactionController {
 
 
     @GetMapping
-    public Page<TransactionResponse> getTransactions(Pageable pageable , @RequestParam(required = false) UUID walletId,
-                                                     @RequestParam(required = false) TransactionType type,
-                                                     @RequestParam(required = false) TransactionStatus status,
-                                                     @AuthenticationPrincipal User user) {
+    public Page<TransactionResponse> getTransactions(
+            Pageable pageable,
+            @RequestParam(required = false) UUID walletId,
+            @RequestParam(required = false) TransactionType type,
+            @RequestParam(required = false) TransactionStatus status,
+            @AuthenticationPrincipal User user) {
         return transactionQueryHandler
                 .handle(new TransactionQueryHandler
                         .GetTransactionsQuery(user.getId(), walletId, type, status, pageable));
