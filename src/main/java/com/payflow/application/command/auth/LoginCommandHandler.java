@@ -1,6 +1,7 @@
 package com.payflow.application.command.auth;
 
 
+import com.payflow.api.dto.response.AuthTokens;
 import com.payflow.api.dto.response.AuthenticationResponse;
 import com.payflow.application.port.TokenPort;
 import com.payflow.application.service.RefreshTokenService;
@@ -28,7 +29,7 @@ public class LoginCommandHandler {
     private final RefreshTokenService refreshTokenService;
 
     @Transactional
-    public AuthenticationResponse handle(Command command)
+    public AuthTokens handle(Command command)
     {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 command.email(),
@@ -40,11 +41,11 @@ public class LoginCommandHandler {
         String rawRefreshToken= refreshTokenService.issue(user.getId());
 
         log.info("User logged in userId={} email={}", user.getId(), user.getUsername());
-        return AuthenticationResponse.builder()
-                .email(user.getUsername())
-                .accessToken(accessToken)
-                .refreshToken(rawRefreshToken)
-                .build();
+        return new AuthTokens(
+                accessToken,
+                rawRefreshToken,
+                command.email()
+        );
     }
 
 

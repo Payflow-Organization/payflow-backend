@@ -4,15 +4,15 @@ import com.payflow.api.dto.request.LoginRequest;
 import com.payflow.api.dto.request.LogoutRequest;
 import com.payflow.api.dto.request.RefreshRequest;
 import com.payflow.api.dto.request.RegisterRequest;
-import com.payflow.api.dto.response.AuthenticationResponse;
+import com.payflow.api.dto.response.AuthTokens;
 import com.payflow.api.dto.response.UserProfileResponse;
 import com.payflow.application.command.auth.LogoutCommandHandler;
 import com.payflow.application.command.auth.RefreshCommandHandler;
 import com.payflow.application.command.auth.RegisterCommandHandler;
 import com.payflow.application.command.auth.LoginCommandHandler;
+import com.payflow.application.port.TokenPort;
 import com.payflow.application.query.CurrentUserQueryHandler;
 import com.payflow.domain.model.user.User;
-import com.payflow.infrastructure.security.JwtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,10 +29,10 @@ public class AuthController {
     private final LogoutCommandHandler logoutCommandHandler;
     private final RefreshCommandHandler refreshCommandHandler;
     private final CurrentUserQueryHandler currentUserQueryHandler;
-    private final JwtService jwtService;
+    private final TokenPort tokenPort;
 
     @PostMapping("/register")
-    public AuthenticationResponse register(@Valid @RequestBody RegisterRequest request) {
+    public AuthTokens register(@Valid @RequestBody RegisterRequest request) {
         return registerCommandHandler.handle(new RegisterCommandHandler.Command(
                 request.getEmail(),
                 request.getPassword(),
@@ -41,7 +41,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthenticationResponse login(@Valid @RequestBody LoginRequest request) {
+    public AuthTokens login(@Valid @RequestBody LoginRequest request) {
         return authenticationQueryHandler.handle(new LoginCommandHandler.Command(
                 request.getEmail(),
                 request.getPassword()
@@ -49,7 +49,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public AuthenticationResponse refresh(@Valid @RequestBody RefreshRequest request) {
+    public AuthTokens refresh(@Valid @RequestBody RefreshRequest request) {
         return refreshCommandHandler.handle(new RefreshCommandHandler.Command(
                 request.getRefreshToken()
         ));
@@ -66,21 +66,15 @@ public class AuthController {
             @RequestHeader("Authorization") String authHeader,
             @RequestBody LogoutRequest request
     ) {
-        String accessToken = jwtService.extractBearerToken(authHeader);
-        if (accessToken == null) {
-            return ResponseEntity.status(401).build();
-        }
+        String rawToken = tokenPort.extractBearerToken(authHeader);
+        if (rawToken == null) return ResponseEntity.status(401).build();
 
-        String jti = jwtService.extractJti(accessToken);
-        java.util.Date expiration = jwtService.extractExpiration(accessToken);
-        if (jti == null || expiration == null) {
-            return ResponseEntity.badRequest().build();
-        }
+        TokenPort.TokenDetails details = tokenPort.extractTokenDetails(rawToken);
+        if (details == null) return ResponseEntity.badRequest().build();
 
-        long ttlSeconds = (expiration.getTime() - System.currentTimeMillis()) / 1000;
         logoutCommandHandler.handle(new LogoutCommandHandler.Command(
-                jti,
-                Math.max(ttlSeconds, 0),
+                details.jti(),
+                details.ttlSeconds(),
                 request.refreshToken()
         ));
         return ResponseEntity.noContent().build();

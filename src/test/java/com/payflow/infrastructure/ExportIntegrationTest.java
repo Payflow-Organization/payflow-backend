@@ -1,7 +1,7 @@
 package com.payflow.infrastructure;
 
 import com.payflow.api.dto.request.RegisterRequest;
-import com.payflow.api.dto.response.AuthenticationResponse;
+import com.payflow.api.dto.response.AuthTokens;
 import com.payflow.infrastructure.persistence.jpa.AuditLogRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,9 +38,9 @@ class ExportIntegrationTest extends BaseTransactionTest {
                         .build())
                 .exchange()
                 .expectStatus().isOk()
-                .returnResult(AuthenticationResponse.class)
+                .returnResult(AuthTokens.class)
                 .getResponseBody()
-                .getAccessToken();
+                .accessToken();
 
         user = userRepository.findByEmail(email).orElseThrow();
         wallet = walletRepository.findByUserId(user.getId()).stream()

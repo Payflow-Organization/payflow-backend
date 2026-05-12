@@ -1,5 +1,6 @@
 package com.payflow.application.command.auth;
 
+import com.payflow.api.dto.response.AuthTokens;
 import com.payflow.api.dto.response.AuthenticationResponse;
 import com.payflow.application.port.TokenPort;
 import com.payflow.application.service.RefreshTokenService;
@@ -64,12 +65,12 @@ class RegisterCommandHandlerTest {
         when(refreshTokenService.issue(any())).thenReturn("refresh-token");
 
         // When
-        AuthenticationResponse response = handler.handle(command);
+        AuthTokens response = handler.handle(command);
 
         // Then
-        assertThat(response.getAccessToken()).isEqualTo("access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
-        assertThat(response.getEmail()).isEqualTo("test@payflow.com");
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isEqualTo("refresh-token");
+        assertThat(response.email()).isEqualTo("test@payflow.com");
         verify(userRepository).save(any(User.class));
         verify(walletService).save(any(Wallet.class));
         verify(passwordEncoder).encode("password123");

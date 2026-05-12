@@ -3,6 +3,7 @@ package com.payflow.application.command.auth;
 import com.payflow.BaseIntegrationTest;
 import com.payflow.api.dto.request.RefreshRequest;
 import com.payflow.api.dto.request.RegisterRequest;
+import com.payflow.api.dto.response.AuthTokens;
 import com.payflow.api.dto.response.AuthenticationResponse;
 import com.payflow.domain.model.token.RefreshToken;
 import com.payflow.domain.repository.RefreshTokenRepository;
@@ -35,7 +36,7 @@ class RefreshTokenIntegrationTest extends BaseIntegrationTest {
     void setUp() {
         userEmail = "refresh-" + UUID.randomUUID() + "@payflow.com";
 
-        AuthenticationResponse response = restTestClient.post()
+        AuthTokens response = restTestClient.post()
                 .uri("/api/v1/auth/register")
                 .body(RegisterRequest.builder()
                         .email(userEmail)
@@ -44,11 +45,11 @@ class RefreshTokenIntegrationTest extends BaseIntegrationTest {
                         .build())
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(AuthenticationResponse.class)
+                .expectBody(AuthTokens.class)
                 .returnResult()
                 .getResponseBody();
 
-        rawRefreshToken = response.getRefreshToken();
+        rawRefreshToken = response.refreshToken();
     }
 
     @Test
