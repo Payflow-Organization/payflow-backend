@@ -38,6 +38,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           feat: update CI permissions for Docker image build and pu
           SONAR_HOST_URL: https://sonarcloud.io
+          SONAR_QUALITYGATE_TIMEOUT: '600'
 
   docker:
     name: Build and Push Docker Image
