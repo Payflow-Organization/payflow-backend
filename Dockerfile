@@ -5,10 +5,10 @@ COPY pom.xml .
 COPY .mvn .mvn
 COPY mvnw .
 RUN chmod +x mvnw
-RUN --mount=type=cache,id=cache:maven,target=/root/.m2 \
+RUN --mount=type=cache,id=s/9e3b2e90-28aa-45c9-a180-e57052e25dc0-root-m2,target=/root/.m2 \
     ./mvnw dependency:go-offline -B
 COPY src src
-RUN --mount=type=cache,id=cache:maven,target=/root/.m2 \
+RUN --mount=type=cache,id=s/9e3b2e90-28aa-45c9-a180-e57052e25dc0-root-m2,target=/root/.m2 \
     ./mvnw clean package -DskipTests -B
 
 #Runtime
