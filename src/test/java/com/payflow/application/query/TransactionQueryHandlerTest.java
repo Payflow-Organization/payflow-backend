@@ -5,12 +5,12 @@ import com.payflow.domain.model.wallet.Wallet;
 import com.payflow.domain.model.wallet.WalletNotFoundException;
 import com.payflow.domain.repository.TransactionRepository;
 import com.payflow.domain.repository.WalletRepository;
+import org.springframework.data.domain.Page;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
@@ -39,13 +39,14 @@ class TransactionQueryHandlerTest {
     }
 
     @Test
-    void shouldSkipOwnershipCheckWhenWalletIdIsNull() {
+    void shouldThrowWhenWalletIdIsNull() {
         UUID userId = UUID.randomUUID();
-        when(repository.findFiltered(null, null, null, Pageable.unpaged())).thenReturn(Page.empty());
+        var query = new TransactionQueryHandler.GetTransactionsQuery(userId, null, null, null, Pageable.unpaged());
 
-        handler.handle(new TransactionQueryHandler.GetTransactionsQuery(userId, null, null, null, Pageable.unpaged()));
+        assertThatThrownBy(() -> handler.handle(query))
+                .isInstanceOf(IllegalArgumentException.class);
 
-        verifyNoInteractions(walletRepository);
+        verifyNoInteractions(walletRepository, repository);
     }
 
     @Test
