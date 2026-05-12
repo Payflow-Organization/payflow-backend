@@ -28,6 +28,9 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
       - name: Build, test and analyze
         run: ./mvnw -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
         env:
