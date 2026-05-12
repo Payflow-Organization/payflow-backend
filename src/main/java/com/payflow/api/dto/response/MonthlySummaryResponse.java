@@ -4,5 +4,4 @@ public record MonthlySummaryResponse(long totalDepositsCents,
                                      long totalWithdrawalsCents,
                                      long netCents,
                                      long transactionCount) {
-
 }
