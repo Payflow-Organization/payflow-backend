@@ -33,13 +33,19 @@ jobs:
         run: chmod +x mvnw
 
       - name: Build, test and analyze
-        run: ./mvnw -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.branch.name=main
+        run: ./mvnw -B -X verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.branch.name=main 2>&1 | tee sonar-debug.log
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           feat: update CI permissions for Docker image build and pu
           SONAR_HOST_URL: https://sonarcloud.io
-          SONAR_QUALITYGATE_TIMEOUT: '600'
+          
+      - name: Upload debug log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-debug-log
+          path: sonar-debug.log
 
   docker:
     name: Build and Push Docker Image
