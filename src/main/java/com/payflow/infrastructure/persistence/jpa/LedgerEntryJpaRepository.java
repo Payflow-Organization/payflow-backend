@@ -35,18 +35,22 @@ public interface LedgerEntryJpaRepository extends JpaRepository<LedgerEntry, UUI
     );
 
     @Query(value = """
-        SELECT
-            t.type                                        AS transactionType,
-            SUM(le.amount)::bigint                        AS totalCents,
-            COUNT(DISTINCT le.transaction_id)::bigint     AS count
-        FROM ledger_entries le
-        JOIN transactions t ON t.id = le.transaction_id
-        WHERE le.wallet_id   = :walletId
-          AND le.created_at >= :from
-          AND le.created_at  < :to
-          AND le.entry_type  = 'DEBIT'
-        GROUP BY t.type
-        ORDER BY totalCents DESC
+
+            SELECT
+              t.type                                        AS transactionType,
+              SUM(le.amount)::bigint                        AS totalCents,
+              COUNT(DISTINCT le.transaction_id)::bigint     AS count
+          FROM ledger_entries le
+          JOIN transactions t ON t.id = le.transaction_id
+          WHERE le.wallet_id   = :walletId
+            AND le.created_at >= :from
+            AND le.created_at  < :to
+            AND (
+                (t.type IN ('WITHDRAW', 'TRANSFER') AND le.entry_type = 'DEBIT')
+                OR (t.type = 'DEPOSIT'             AND le.entry_type = 'CREDIT')
+            )
+          GROUP BY t.type
+          ORDER BY totalCents DESC
         """, nativeQuery = true)
     List<SpendingByCategoryResponse> findSpendingByCategory(
             @Param("walletId") UUID walletId,
