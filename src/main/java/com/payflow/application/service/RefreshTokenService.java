@@ -20,11 +20,16 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
+
 public class RefreshTokenService {
-    @Value("${app.jwt.refresh-expiration}")
-    private long refreshExpirationMs;
+    private final long refreshExpirationMs;
     private final RefreshTokenRepository refreshTokenRepository;
+    public RefreshTokenService(
+            @Value("${app.jwt.refresh-expiration}") long refreshExpirationMs,
+            RefreshTokenRepository refreshTokenRepository) {
+        this.refreshExpirationMs = refreshExpirationMs;
+        this.refreshTokenRepository = refreshTokenRepository;
+    }
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Transactional

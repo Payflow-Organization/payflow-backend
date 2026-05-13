@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,7 +28,7 @@ class RefreshTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        refreshTokenService = new RefreshTokenService(refreshTokenRepository);
+        refreshTokenService = new RefreshTokenService(1000L,refreshTokenRepository);
     }
     private RefreshToken validToken(UUID userId) {
         return RefreshToken.builder()
