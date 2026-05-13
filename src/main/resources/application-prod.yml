@@ -15,6 +15,9 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
       timeout: 2000ms
+  flyway:
+      baseline-on-migrate: true
+      baseline-version: 0
   kafka:
     kafka:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
