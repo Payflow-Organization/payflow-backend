@@ -23,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RefreshTokenService {
     @Value("${app.jwt.refresh-expiration}")
-    private final long refreshExpirationMs;
+    private long refreshExpirationMs;
     private final RefreshTokenRepository refreshTokenRepository;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
