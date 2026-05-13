@@ -5,6 +5,7 @@ import com.payflow.api.dto.response.BalanceResponse;
 import com.payflow.api.dto.response.WalletResponse;
 import com.payflow.application.command.wallet.CreateWalletCommandHandler;
 import com.payflow.application.command.wallet.FreezeWalletCommandHandler;
+import com.payflow.application.command.wallet.UnfreezeWalletCommandHandler;
 import com.payflow.application.query.wallet.GetWalletBalanceQueryHandler;
 import com.payflow.application.query.wallet.WalletQueryHandler;
 import com.payflow.domain.model.user.User;
@@ -26,6 +27,7 @@ public class WalletController {
     private final WalletQueryHandler walletQueryHandler;
     private final CreateWalletCommandHandler createWalletCommandHandler;
     private final FreezeWalletCommandHandler freezeWalletCommandHandler;
+    private final UnfreezeWalletCommandHandler unfreezeWalletCommandHandler;
     private final GetWalletBalanceQueryHandler getWalletBalanceQueryHandler;
 
     @GetMapping
@@ -58,4 +60,11 @@ public class WalletController {
         freezeWalletCommandHandler.handle(new FreezeWalletCommandHandler.Command(id, user.getId()));
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/unfreeze")
+    public ResponseEntity<Void> unfreeze(@PathVariable UUID id, @AuthenticationPrincipal User user) {
+        unfreezeWalletCommandHandler.handle(new UnfreezeWalletCommandHandler.Command(id, user.getId()));
+        return ResponseEntity.noContent().build();
+    }
+
 }
