@@ -19,7 +19,6 @@ spring:
       baseline-on-migrate: true
       baseline-version: 0
   kafka:
-    kafka:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
       properties:
         security.protocol: SASL_SSL
