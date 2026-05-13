@@ -29,7 +29,7 @@ class RefreshTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        refreshTokenService = new RefreshTokenService(1000L,refreshTokenRepository);
+        refreshTokenService = new RefreshTokenService(refreshTokenRepository);
     }
     private RefreshToken validToken(UUID userId) {
         return RefreshToken.builder()
