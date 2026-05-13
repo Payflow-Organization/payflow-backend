@@ -54,6 +54,7 @@ public class DataSourceConfig {
         var routing = new RoutingDataSource();
         routing.setTargetDataSources(Map.of("write", writeDataSource, "read", readDataSource));
         routing.setDefaultTargetDataSource(writeDataSource);
+        routing.afterPropertiesSet();
         return routing;
     }
 }
