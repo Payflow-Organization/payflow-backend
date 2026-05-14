@@ -59,6 +59,13 @@ public class Wallet {
         this.status = WalletStatus.FROZEN;
     }
 
+    public void unfreeze() {
+        if (status != WalletStatus.FROZEN) {
+            throw new IllegalStateException("Cannot unfreeze wallet with status: " + status);
+        }
+        this.status = WalletStatus.ACTIVE;
+    }
+
     public void validateSufficientBalance(long amountCents) {
         if (amountCents > this.currentBalance) {
             throw new InsufficientBalanceException(this.id, amountCents);

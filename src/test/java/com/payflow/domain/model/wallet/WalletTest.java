@@ -80,4 +80,27 @@ class WalletTest {
         assertThatThrownBy(wallet::freeze)
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void shouldUnfreezeFrozenWallet() {
+        // Given
+        Wallet wallet = Wallet.create(UUID.randomUUID(), Currency.getInstance("GBP"));
+        wallet.freeze();
+
+        // When
+        wallet.unfreeze();
+
+        // Then
+        assertThat(wallet.getStatus()).isEqualTo(WalletStatus.ACTIVE);
+    }
+
+    @Test
+    void shouldThrowWhenUnfreezingActiveWallet() {
+        // Given
+        Wallet wallet = Wallet.create(UUID.randomUUID(), Currency.getInstance("GBP"));
+
+        // When / Then
+        assertThatThrownBy(wallet::unfreeze)
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
