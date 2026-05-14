@@ -15,7 +15,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,11 +42,11 @@ public class AnalyticsController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "1 day") String interval,
-            @AuthenticationPrincipal UserDetails userDetails
+            @AuthenticationPrincipal User user
     ) {
         var query = new AnalyticsQueryHandler.BalanceHistoryQuery(
                 walletId,
-                UUID.fromString(userDetails.getUsername()),
+                user.getId(),
                 from,
                 to,
                 interval
