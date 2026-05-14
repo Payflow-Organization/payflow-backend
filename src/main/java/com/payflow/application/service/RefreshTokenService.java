@@ -49,12 +49,12 @@ public class RefreshTokenService {
 
     @Transactional
     public void revoke(String rawToken) {
+        if (rawToken == null) return;
         refreshTokenRepository.findByTokenHash(sha256Hex(rawToken))
                 .ifPresent(token -> {
                     token.revoke();
                     refreshTokenRepository.save(token);
                     log.warn("Refresh token revoked userId={}", token.getUserId());
-
                 });
     }
     public RefreshToken validate(String rawToken) {
