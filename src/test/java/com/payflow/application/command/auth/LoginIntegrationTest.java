@@ -33,7 +33,7 @@ class LoginIntegrationTest extends BaseIntegrationTest {
                         .fullName("Test User")
                         .build())
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().isNoContent();
     }
 
 
@@ -49,7 +49,7 @@ class LoginIntegrationTest extends BaseIntegrationTest {
                         .build()
                 )
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().isNoContent();
     }
 
     @Test

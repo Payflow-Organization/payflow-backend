@@ -23,7 +23,7 @@ class RegisterIntegrationTest extends BaseIntegrationTest {
                         .fullName("Test User")
                         .build())
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().isNoContent();
     }
 
     @Test
@@ -36,7 +36,7 @@ class RegisterIntegrationTest extends BaseIntegrationTest {
                 .build();
 
         restTestClient.post().uri("/api/v1/auth/register").body(request)
-                .exchange().expectStatus().isOk();
+                .exchange().expectStatus().isNoContent();
 
         restTestClient.post().uri("/api/v1/auth/register").body(request)
                 .exchange().expectStatus().isEqualTo(409);

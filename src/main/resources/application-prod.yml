@@ -29,6 +29,11 @@ spring:
           username="${KAFKA_SASL_USERNAME}"
           password="${KAFKA_SASL_PASSWORD}";
 
+app:
+  cookie:
+    secure: true
+    same-site: None
+
 logging:
   level:
     com.payflow: INFO

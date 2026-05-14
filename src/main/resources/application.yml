@@ -64,6 +64,11 @@ app:
     secret: ${JWT_SECRET}
     expiration: 900000
     refresh-expiration: 604800000
+  cors:
+    allowed-origins: ${FRONTEND_URL:http://localhost:3000}
+  cookie:
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Lax}
 
 logging:
   level:
