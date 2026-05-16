@@ -82,6 +82,25 @@ Tests use Testcontainers — no manual setup required:
 ```
 
 ## Documentation
+- [`docs/architecture-patterns.md`](docs/architecture-patterns.md) - deep dive into all patterns with failure modes and rationale
+- [`docs/adr/`](docs/adr/) - 15 ADRs covering significant architectural tradeoffs
+- [`docs/implementation-notes.md`](docs/implementation-notes.md) - lightweight record of smaller implementation decisions
+- [`docs/runbook.md`](docs/runbook.md) - incident response procedures for known failure modes
+- [`docs/diagrams/`](docs/diagrams/) - system component diagram, transfer sequence flow, Spring Security filter chain, token lifecycle
+
 ## Operational Readiness
+- [`docs/runbook.md`](docs/runbook.md) - incident response for outbox relay failures, Kafka consumer lag, reconciliation drift, Redis unavailability
+- Environment configs for local, staging, and prod in `src/main/resources/`
+- Micrometer instrumentation is ready for Prometheus scraping
+- SonarCloud quality gate enforced on every PR
+
 ## Known Limitations
+- Single Kafka broker - production would require replication factor ≥ 3
+- Outbox relay runs on app thread - production would extract to a
+  separate service
+- No circuit breaker on external calls yet
+- Reconciliation job is scheduled, not event-driven
+
 ## Frontend
+See [payflow-frontend](https://github.com/Payflow-Organization/payflow-frontend) for the Next.js dashboard including the
+Demo Scenarios page, which maps UI interactions to backend guarantees.
