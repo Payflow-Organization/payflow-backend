@@ -77,7 +77,7 @@ adds contention without improving accuracy. The natural answer is to split the t
 per-method inside shared handlers. Command Query Responsibility Segregation makes separation explicit and mechanically 
 enforced at the Spring transaction boundary.
 
-Command handlers for handling transactions(`DepositCommandHandler`, `WithdrawCommandHandler`, `TransferCommandHandler`)  own invariant enforcement and run under 
+Command handlers for handling transactions (`DepositCommandHandler`, `WithdrawCommandHandler`, `TransferCommandHandler`) own invariant enforcement and run under 
 `SERIALIZABLE` isolation. Query handlers run under `READ_COMMITTED` with `readOnly=true`, routed to the read replica automatically. 
 Accidental mutations are silently dropped rather than rejected because real protection is architectural, not mechanical, which is a known
 limitation of this approach.
