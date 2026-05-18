@@ -88,7 +88,7 @@ That distinction determines the specific isolation transaction boundary and isol
 
 ## 6. Read/Write Datasource Split
 People check their balance and browse their history far more often than they actually transfer money. Without a dual read/write split all of their read traffic hits the same database as every deposit 
-and withdrawal. This, e.g., lock writes two very different kinds of work at once, even though reads don't need anything from the write path to do their job correctly. Query handlers route to a read replica 
+and withdrawal. This makes read traffic and write traffic compete for the same database resources, even though reads do not need anything from the write path to do their job correctly. Query handlers route to a read replica 
 automatically via `AbstractRoutingDataSource`. The routing key is the current transaction's `readOnly` flag - `determineCurrentLookupKey()` checks `TransactionSynchronizationManager.isCurrentTransactionReadOnly()` 
 and returns either the primary or replica datasource. No annotation beyond `@Transactional(readOnly=true)` is needed on the query handler side.
 ```java
