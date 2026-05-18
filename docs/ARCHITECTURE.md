@@ -99,7 +99,9 @@ protected Object determineCurrentLookupKey() {
 }
 ```
 
-The Testcontainers setup uses `GenericContainer` with `DynamicPropertyRegistrar` rather than 
-`@ServiceConnection` - `@ServiceConnection` doesn't support the split datasource configuration 
-and silently falls back to a single datasource, which would make the routing invisible in tests.
+In integration tests, `BaseIntegrationTest` starts a `PostgreSQLContainer` and uses
+`@DynamicPropertySource` to register both the write and read datasource properties so
+the routing logic is exercised against the same container-backed database setup used by
+the application context. `@ServiceConnection` is used in `TestcontainersConfiguration`
+for Kafka and Redis, not for the split datasource wiring.
 
