@@ -29,7 +29,7 @@ public class TransactionOutboxWriter {
                 .payload(serialize(toPayload(tx, userId)))
                 .status(OutboxEventStatus.PENDING)
                 .build();
-        outboxRepository.save(event);
+        outboxRepository.save(event); // ADR-013: outbox written in same transaction as state change — Kafka publish happens separately via OutboxRelay
     }
 
     private TransactionCreatedPayload toPayload(Transaction tx, UUID userId)

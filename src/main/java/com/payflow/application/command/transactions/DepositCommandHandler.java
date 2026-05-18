@@ -57,7 +57,7 @@ public class DepositCommandHandler {
                     maxDelayExpression = "${payflow.retry.max-interval-ms:1000}"
             )
     )
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.SERIALIZABLE) // ADR-008: SERIALIZABLE scoped to money mutations only
     public Transaction handle(Command command) {
         Timer.Sample timer = Timer.start(meterRegistry);
 

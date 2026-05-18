@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WalletService {
     private final WalletRepository walletRepository;
-    @Cacheable(value = "wallets", key = "#walletId + ':' + #requestingUserId")
+    @Cacheable(value = "wallets", key = "#walletId + ':' + #requestingUserId") // ADR-003: ledger is source of truth, cache accelerates reads only
     public Wallet getActiveById(UUID walletId, UUID requestingUserId) {
         log.debug("Cache miss — loading wallet from DB walletId={} userId={}", walletId, requestingUserId);
         return walletRepository.findByIdAndUserIdAndStatus(walletId,requestingUserId, WalletStatus.ACTIVE).orElseThrow(
