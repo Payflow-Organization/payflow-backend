@@ -69,7 +69,7 @@ job that verifies if the cache matches a ledger sum. Any drift means that the at
 never auto-corrects. Automatic correction would mask the root cause, so this way it serves as a point of investigation on the write path that
 produced the drift.
 
-See [ADR-015](ADR-015-double-entry-ledger-over-single-Entry.md)
+See [ADR-015](adr/ADR-015-double-entry-ledger-over-single-Entry.md)
 
 ## 5. CQRS
 Mutations on balance need `SERIALIZABLE` isolation. It is unnecessary to read the balance like that because doing so 
