@@ -25,7 +25,7 @@ Cost factor 12 is roughly 300ms per hash on commodity hardware. Lower is too fas
 The logout denylist entry TTL is the token's remaining lifetime. If the token is already expired at the moment of logout, the remaining TTL would be negative — Redis rejects negative TTLs. The `Math.max` clamp prevents a `DataAccessException` being thrown at logout for an already-expired token.
 
 **`// NOSONAR` on `@Transactional` self-call in `RefreshTokenService`**
-`RefreshTokenService.rotate()` calls its own `revoke()` method, which has `@Transactional(propagation = REQUIRES_NEW)`. Self-invocation bypasses the AOP proxy so `REQUIRES_NEW` silently does nothing. The `// NOSONAR` suppresses the SonarQube warning because the tradeoff was explicit: extracting `revoke()` to a separate bean or using self-injection (`@Autowired private RefreshTokenService self`) are both more complex for a case where the `REQUIRES_NEW` behavior isn't load-bearing on this path. Document the bypass; don't hide it.
+`RefreshTokenService.rotate()` calls its own `revoke()` method, which has `@Transactional(propagation = REQUIRES_NEW)`. Self-invocation bypasses the AOP proxy so `REQUIRES_NEW` silently does nothing. Extracting `revoke()` to a separate bean just to satisfy the proxy would be a shallow module — the interface is as complex as the implementation, adding indirection without adding value. Self-injection (`@Autowired private RefreshTokenService self`) solves the proxy issue but makes the dependency graph misleading. The `// NOSONAR` documents the deliberate bypass instead of hiding it.
 
 ---
 
@@ -66,12 +66,18 @@ Spring Boot's `@ServiceConnection` auto-wires a single datasource. PayFlow has t
 **`consumer_group` column on `processed_events` composite PK**
 The PK is `(event_id, consumer_group)`. Without the `consumer_group` discriminator, `AuditConsumer` marking an event as processed would block any future consumer from ever processing the same event, even if it has completely different responsibilities.
 
+**`ack-mode: record`**
+Offsets are committed after each individual record is processed, not after the whole batch. With `BATCH`, a consumer crash mid-batch redelivers every record in the batch — including ones already processed. With `RECORD`, only unprocessed records are redelivered. This pairs correctly with the `processed_events` idempotency check: duplicates are skipped, not reprocessed, but `RECORD` minimises unnecessary duplicate traffic.
+
 ---
 
 ## Observability
 
 **`@PostConstruct` for gauge registration, no parameters**
 `LedgerMetrics` and `OutboxMetrics` register Micrometer gauges in a `@PostConstruct` no-arg method. Spring lifecycle methods must be no-arg — passing `MeterRegistry` as a parameter would prevent Spring from invoking the method. The registry is injected as a field instead.
+
+**ECS structured logging (`logging.structured.format.console: ecs`)**
+Spring Boot 4's native structured logging writes every log line as a JSON object in Elastic Common Schema format. ECS is the standard schema used by Elasticsearch, OpenSearch, and most log aggregation pipelines — field names like `log.level`, `message`, `trace.id` are understood by tooling without custom mappings. The alternative is plain text with a pattern layout, which requires a parsing step before logs are queryable. Structured output is free here since Spring Boot 4 ships it natively.
 
 ---
 
