@@ -82,7 +82,7 @@ Tests use Testcontainers — no manual setup required:
 ```
 
 ## Documentation
-- [`docs/ARCHITECTURE.md`](docs/architecture-patterns.md) - deep dive into all patterns with failure modes and rationale
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - deep dive into all patterns with failure modes and rationale
 - [`docs/adr/`](docs/adr/) - 15 ADRs covering significant architectural tradeoffs
 - [`docs/implementation-notes.md`](docs/implementation-notes.md) - lightweight record of smaller implementation decisions
 - [`docs/RUNBOOK.md`](docs/runbook.md) - incident response procedures for known failure modes
