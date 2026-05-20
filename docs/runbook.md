@@ -223,6 +223,35 @@ The 7-day buffer retains recently expired tokens for audit purposes. Tokens that
 
 ---
 
+## Vercel Proxy Not Forwarding to Railway
+
+**Severity:** P1 — all API calls fail; authentication and every protected endpoint are broken
+
+**Symptoms**
+- Every API call returns a network error or hits the wrong host
+- Browser DevTools Network tab shows requests going to the Railway domain (`*.railway.app`) instead of the Vercel domain
+- `SameSite=Strict` blocks cookies — login sets the cookie but subsequent requests don't attach it
+- Worked before a recent frontend deployment
+
+**Diagnosis**
+Open DevTools → Network → find any `/api/v1/...` request and inspect the request URL:
+- Domain is `*.railway.app` — the browser is calling Railway directly; the proxy is not running
+- Domain is `*.vercel.app` — proxy is working; look elsewhere
+
+If the proxy is not running, check:
+1. `NEXT_PUBLIC_BACKEND_URL` in Vercel environment variables — must be set to the Railway URL. If missing or wrong, the rewrite destination is undefined and Vercel drops the route.
+2. The Axios client base URL — must be the relative `/api/v1`, never `NEXT_PUBLIC_BACKEND_URL` directly. If someone changed the client to use the env var as a base URL, the browser bypasses the proxy entirely.
+
+**Fix**
+- `NEXT_PUBLIC_BACKEND_URL` missing or wrong in Vercel: correct the env var and redeploy.
+- Axios base URL pointing at Railway directly: revert the client to use relative `/api/v1` — the proxy is the only thing that should know the Railway URL.
+
+**Post-incident**
+- Confirm in DevTools that API requests show the Vercel domain after the fix.
+- Confirm `accessToken` cookie is present and attached on subsequent requests.
+
+---
+
 ## Authentication Cookies Not Being Sent
 
 **Severity:** P1 — users cannot authenticate; all protected endpoints are inaccessible
