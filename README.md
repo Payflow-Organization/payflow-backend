@@ -85,8 +85,9 @@ Tests use Testcontainers — no manual setup required:
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - deep dive into all patterns with failure modes and rationale
 - [`docs/adr/`](docs/adr/) - 15 ADRs covering significant architectural tradeoffs
 - [`docs/implementation-notes.md`](docs/implementation-notes.md) - lightweight record of smaller implementation decisions
-- [`docs/runbook.md`](docs/runbook.md) - incident response procedures for known failure modes
+- [`docs/RUNBOOK.md`](docs/runbook.md) - incident response procedures for known failure modes
 - [`docs/diagrams/`](docs/diagrams/) - system component diagram, transfer sequence flow, Spring Security filter chain, token lifecycle
+
 
 ## Operational Readiness
 - [`docs/runbook.md`](docs/runbook.md) - incident response for outbox relay failures, Kafka consumer lag, reconciliation drift, Redis unavailability
@@ -94,7 +95,24 @@ Tests use Testcontainers — no manual setup required:
 - Micrometer instrumentation is ready for Prometheus scraping
 - SonarCloud quality gate enforced on every PR
 
-## Known Limitations
+## Known Limitati## Known Issues
+
+- **Replica lag on read-your-own-writes** — balance reads immediately
+  after a mutation may return stale data from the replica. A cache miss
+  after eviction can promote the stale value into Redis, extending the
+  inconsistency window beyond replication lag. See
+  [ADR-016](docs/adr/ADR-016-abstract-routing-datasource-read-write-split.md)
+  for mitigations. See [Runbook](docs/runbook.md#replica-lag).
+
+- **Outbox relay on application thread** — a relay crash during publish
+  leaves events as PENDING until the next tick. Acceptable at
+  single-instance scale, requires extraction to a separate service in
+  a multi-instance deployment. See
+  [Runbook](docs/runbook.md#outbox-relay-not-publishing).
+
+- **Synchronous export under load** — concurrent export requests block
+  HTTP threads for the duration of file generation. See
+  [ADR-018](docs/adr/ADR-018-synchronous-export-over-async-job-queue.md).ons
 - Single Kafka broker - production would require replication factor ≥ 3
 - Outbox relay runs on app thread - production would extract to a
   separate service

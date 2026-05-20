@@ -43,7 +43,7 @@ public class AuditConsumer {
         }
         try {
             TransactionCreatedPayload event = objectMapper.readValue(payload, TransactionCreatedPayload.class);
-            if (processedEventRepository.existsByIdEventIdAndIdConsumerGroup(event.transactionId(), CONSUMER_GROUP)) {
+            if (processedEventRepository.existsByIdEventIdAndIdConsumerGroup(event.transactionId(), CONSUMER_GROUP)) { // ADR-012: idempotency via processed_events, consumer_group discriminator allows independent consumers on same topic
                 log.warn("Duplicate audit event skipped  txId={}",
                          event.transactionId());
                 return;
