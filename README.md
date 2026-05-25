@@ -82,7 +82,9 @@ Tests use Testcontainers — no manual setup required:
 ```
 
 ## Deployment
-See [PayFlow org](https://github.com/Payflow-Organization) for live deployment details.
+
+Hosted on Railway. Docker image published to GitHub Container Registry 
+on every merge to `main`. Environment variables documented in `.env.example`.
 
 ```bash
 docker pull ghcr.io/Payflow-Organization/payflow-backend:latest
