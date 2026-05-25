@@ -17,7 +17,7 @@ spring:
       password: ${REDIS_PASSWORD}
       timeout: 2000ms
   flyway:
-      baseline-on-migrate: true
+      baseline-on-migrate: false
       baseline-version: 0
   kafka:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
