@@ -16,6 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -80,8 +81,9 @@ class RefreshTokenIntegrationTest extends BaseIntegrationTest {
                 .expectStatus().isUnauthorized();
 
         var user = userRepository.findByEmail(userEmail).orElseThrow();
-        assertThat(refreshTokenRepository.findAllByUserId(user.getId()))
-                .allMatch(RefreshToken::isRevoked);
+        List<RefreshToken> tokens = refreshTokenRepository.findAllByUserId(user.getId());
+        tokens.forEach(t -> System.out.println("token id=" + t.getId() + " revoked=" + t.isRevoked()));
+        assertThat(tokens).allMatch(RefreshToken::isRevoked);
     }
 
     @Test

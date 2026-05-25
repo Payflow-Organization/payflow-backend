@@ -19,11 +19,21 @@ spring:
       url: ${DB_WRITE_URL}
       username: ${DB_USER}
       password: ${DB_PASSWORD}
+      hikari:
+        maximum-pool-size: 7
+        minimum-idle: 2
+        connection-timeout: 10000
+        connection-init-sql: "SET statement_timeout = '5000'; SET lock_timeout = '3000'"
+
     read:
       url: ${DB_READ_URL}
       username: ${DB_USER}
       password: ${DB_PASSWORD}
-
+      hikari:
+        maximum-pool-size: 7
+        minimum-idle: 2
+        connection-timeout: 10000
+        connection-init-sql: "SET statement_timeout = '5000'; SET lock_timeout = '3000'"
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
@@ -42,6 +52,7 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     listener:
       ack-mode: record
+
 payflow:
   kafka:
     topics:
@@ -79,6 +90,7 @@ logging:
   structured:
     format:
       console: ecs
+
 management:
   endpoints:
     web:
@@ -87,6 +99,10 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+  otlp:
+    metrics:
+      export:
+        enabled: false
   tracing:
     sampling:
       probability: ${TRACING_SAMPLING_PROBABILITY:1.0}

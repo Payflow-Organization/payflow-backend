@@ -68,11 +68,13 @@ public class RefreshTokenService {
         if (token.getExpiresAt().isBefore(Instant.now())) {
             throw new InvalidRefreshTokenException("Token expired");
         }
-        token.validate();
         return token;
     }
 
-
+    @Transactional
+    public void handleReplayAttack(UUID userId) {
+        refreshTokenRepository.revokeAllByUserId(userId);
+    }
 
 
     private static String sha256Hex(String input) {
