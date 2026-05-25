@@ -1,7 +1,7 @@
 # ADR-018: Synchronous PDF/CSV Export over Async Job Queue
 
 ## Status
-Accepted — 
+Accepted — Week 3
 
 ## Context
 PayFlow exposes export endpoints for transaction history — users can
