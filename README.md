@@ -81,6 +81,13 @@ Tests use Testcontainers — no manual setup required:
 ./mvnw test
 ```
 
+## Deployment
+See [PayFlow org](https://github.com/Payflow-Organization) for live deployment details.
+
+```bash
+docker pull ghcr.io/Payflow-Organization/payflow-backend:latest
+```
+
 ## Documentation
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - deep dive into all patterns with failure modes and rationale
 - [`docs/adr/`](docs/adr/) - 15 ADRs covering significant architectural tradeoffs
@@ -95,24 +102,33 @@ Tests use Testcontainers — no manual setup required:
 - Micrometer instrumentation is ready for Prometheus scraping
 - SonarCloud quality gate enforced on every PR
 
-## Known Limitati## Known Issues
+## Known Limitations
 
 - **Replica lag on read-your-own-writes** — balance reads immediately
   after a mutation may return stale data from the replica. A cache miss
   after eviction can promote the stale value into Redis, extending the
-  inconsistency window beyond replication lag. See
-  [ADR-016](docs/adr/ADR-016-abstract-routing-datasource-read-write-split.md)
+  inconsistency window beyond replication lag. 
+  
+  See [ADR-016](docs/adr/ADR-016-abstract-routing-datasource-read-write-split.md)
   for mitigations. See [Runbook](docs/runbook.md#replica-lag).
 
 - **Outbox relay on application thread** — a relay crash during publish
   leaves events as PENDING until the next tick. Acceptable at
   single-instance scale, requires extraction to a separate service in
-  a multi-instance deployment. See
-  [Runbook](docs/runbook.md#outbox-relay-not-publishing).
+  a multi-instance deployment. 
+  
+  See [Runbook](docs/runbook.md#outbox-relay-not-publishing).
 
 - **Synchronous export under load** — concurrent export requests block
-  HTTP threads for the duration of file generation. See
-  [ADR-018](docs/adr/ADR-018-synchronous-export-over-async-job-queue.md).ons
+  HTTP threads for the duration of file generation. 
+  
+  See [ADR-018](docs/adr/ADR-018-synchronous-export-over-async-job-queue.md).
+- **No connection pooler** — HikariCP connects directly to PostgreSQL 
+  without PgBouncer. Each pool connection holds a dedicated PostgreSQL 
+  backend process. At high concurrency this approaches PostgreSQL's 
+  `max_connections` limit. PgBouncer in transaction mode would multiplex 
+  many application connections onto fewer backend processes — standard 
+  practice for production PostgreSQL deployments.
 - Single Kafka broker - production would require replication factor ≥ 3
 - Outbox relay runs on app thread - production would extract to a
   separate service
