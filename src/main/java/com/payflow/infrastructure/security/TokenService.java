@@ -32,7 +32,7 @@ public class TokenService {
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis()+jwtExpiration))
                 .id(UUID.randomUUID().toString())
-                .signWith(getSignInKey(), Jwts.SIG.HS256).compact();
+                .signWith(getSignInKey(), Jwts.SIG.HS256).compact(); // ADR-005: HS256 chosen over RS256 — monolith, no external token consumers
     }
 
 
@@ -40,7 +40,7 @@ public class TokenService {
         byte[] decodedKey;
         try {
             decodedKey = Base64.getDecoder().decode(jwtSecret);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException _) {
             decodedKey = Base64.getUrlDecoder().decode(jwtSecret);
         }
         return Keys.hmacShaKeyFor(decodedKey);

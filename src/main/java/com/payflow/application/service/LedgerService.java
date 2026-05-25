@@ -14,6 +14,7 @@ public class LedgerService {
 
     private final LedgerEntryRepository ledgerEntryRepository;
 
+    // ADR-015: double-entry — every money movement produces both a credit and a debit entry
     public void createCreditEntry(Transaction tx, Wallet wallet, long amountCents) {
         long balanceAfter = wallet.getCurrentBalance() + amountCents;
         ledgerEntryRepository.save(LedgerEntry.builder()

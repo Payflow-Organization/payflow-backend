@@ -33,7 +33,7 @@ public class Wallet {
     @Column(nullable = false, length = 50)
     private WalletStatus status;
 
-    @Version
+    @Version // ADR-006: optimistic locking over pessimistic — lower contention, retried on conflict
     @Column(nullable = false)
     private Long version;
 
