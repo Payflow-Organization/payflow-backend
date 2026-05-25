@@ -86,10 +86,6 @@ Tests use Testcontainers — no manual setup required:
 Hosted on Railway. Docker image published to GitHub Container Registry 
 on every merge to `main`. Environment variables documented in `.env.example`.
 
-```bash
-docker pull ghcr.io/Payflow-Organization/payflow-backend:latest
-```
-
 ## Documentation
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - deep dive into all patterns with failure modes and rationale
 - [`docs/adr/`](docs/adr/) - 15 ADRs covering significant architectural tradeoffs
