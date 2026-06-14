@@ -128,10 +128,6 @@ on every merge to `main`. Environment variables documented in `.env.example`.
   many application connections onto fewer backend processes — standard 
   practice for production PostgreSQL deployments.
 - Single Kafka broker - production would require replication factor ≥ 3
-- Outbox relay runs on app thread - production would extract to a
-  separate service
-- No circuit breaker on external calls yet
-- Reconciliation job is scheduled, not event-driven
 
 ## Frontend
 See [payflow-frontend](https://github.com/Payflow-Organization/payflow-frontend) for the Next.js dashboard including the
