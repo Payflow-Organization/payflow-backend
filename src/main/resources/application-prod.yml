@@ -5,11 +5,24 @@ spring:
       username: ${DB_USER}
       password: ${DB_PASSWORD}
       driver-class-name: org.postgresql.Driver
+      hikari:
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+        keepalive-time: 300000
+        minimum-idle: 1
+        maximum-pool-size: 5
     read:
       url: ${DB_READ_URL}
       username: ${DB_USER}
       password: ${DB_PASSWORD}
       driver-class-name: org.postgresql.Driver
+      hikari:
+        keepalive-time: 300000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+        minimum-idle: 1
+        maximum-pool-size: 3
   data:
     redis:
       host: ${REDIS_HOST}
